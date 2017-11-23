@@ -103,13 +103,28 @@ fn interpet_args() {
             "new" => new_theme(&args[2]),
             "help" => print_help(),
             "delete" => del_theme(&args[2]),
+            "edit" => edit(&args[2]),
             "refresh" => refresh_theme(wm, monitor),
             _ => println!("Unknown command. raven help for commands."),
         }
 
     }
 }
-fn clear_prev(){
+fn edit(theme_name: &str) {
+    if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(get_home() + "/.config/raven/editing")
+            .expect("Can't open editing log")
+            .write_all(theme_name.as_bytes())
+            .unwrap();
+        println!("You are now editing the theme {}", &theme_name);
+    } else {
+        println!("That theme does not exist");
+    }
+}
+fn clear_prev() {
     Command::new("pkill").arg("polybar").spawn().unwrap();
 }
 fn del_theme(theme_name: &str) {
@@ -144,6 +159,7 @@ fn new_theme(theme_name: &str) {
             )
             .expect("can open");
         file.write_all((String::from("|")).as_bytes()).unwrap();
+        edit(&theme_name);
     } else {
         println!("Theme {} already exists", &theme_name);
     }
@@ -204,8 +220,9 @@ fn init() {
         .write(true)
         .open(get_home() + "/.config/raven/config")
         .unwrap();
-    file.write_all((String::from("window_manager: |i3|\n|monitor: |1|")).as_bytes())
-        .unwrap();
+    file.write_all(
+        (String::from("window_manager: |i3|\n|monitor: |1|")).as_bytes(),
+    ).unwrap();
     println!("Correctly initialized base config. Please run again to use raven.");
 }
 fn get_config() -> (String, i32) {
@@ -227,6 +244,7 @@ fn print_help() {
     println!("new [theme] : create a new theme");
     println!("delete [theme] : delete a theme");
     println!("refresh : load last loaded theme");
+    println!("edit [theme] : initialize editing [theme]"); 
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());

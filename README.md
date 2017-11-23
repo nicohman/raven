@@ -29,6 +29,7 @@ load [theme] : load a complete theme
 new [theme] : create a new theme
 delete [theme] : delete a theme
 refresh : load last loaded theme
+edit [theme] : initialize editing [theme]
 ```
 ## Configuration
 A Main config file is place in ~/.config/raven/config, which has two options:
