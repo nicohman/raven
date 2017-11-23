@@ -99,10 +99,14 @@ fn interpet_args() {
                 "load" => load_theme(&args[2], wm, monitor),
                 "new" => new_theme(&args[2]),
                 "help" => print_help(),
+                "delete" => del_theme(&args[2]),
                 _ => println!("Unknown command. raven help for commands."),
             }
         
     }
+}
+fn del_theme(theme_name:&str) {
+    fs::remove_dir_all(get_home()+"/.config/raven/themes/"+&theme_name).expect("Couldn't delete theme");;
 }
 fn new_theme(theme_name: &str) {
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
@@ -193,6 +197,7 @@ fn print_help() {
     println!("help : show this screen");
     println!("load [theme] : load a complete theme");
     println!("new [theme] : create a new theme");
+    println!("delete [theme] : delete a theme");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
