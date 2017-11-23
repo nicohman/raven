@@ -13,10 +13,13 @@ Run:
 
 The following packages are required for their relevant options:
 
-+[Feh](https://github.com/derf/feh): `wall`
-+[Polybar](https://github.com/jaagr/polybar): `poly`
-+[Termite](https://github.com/thestinger/termite/): `termite`
-+[i3](https://github.com/i3/i3): `wm`
++ [Feh](https://github.com/derf/feh): `wall`
+
++ [Polybar](https://github.com/jaagr/polybar): `poly`
+
++ [Termite](https://github.com/thestinger/termite/): `termite`
+
++ [i3](https://github.com/i3/i3): `wm`
 
 ## Usage
 Currently WIP. There is no easy way to create new themes, but that shall quickly be remedied. Until then, `raven help` for a list of available commands:
