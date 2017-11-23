@@ -32,13 +32,17 @@ impl Theme {
             .spawn()
             .expect("Couldn't reload i3");
     }
-    fn load_poly(&self) {
-        let poly = Command::new("polybar")
-            .arg("-c")
-            .arg(get_home() + "/.config/raven/themes/" + &self.name + "/poly")
-            .arg("main")
-            .spawn()
-            .expect("Failed to run polybar");
+    fn load_poly(&self, monitor:i32) {
+        let order:Vec<&str> = vec!["main", "other"];
+        for number in (0..monitor).rev() {
+            println!("POLY");
+            let poly = Command::new("polybar")
+                .arg("-c")
+                .arg(get_home() + "/.config/raven/themes/" + &self.name + "/poly")
+                .arg(order[number as usize])
+                .spawn()
+                .expect("Failed to run polybar");
+        }
     }
     fn load_wall(&self) {
         println!("{}",get_home() + "/.config/raven/themes/" + &self.name + "/wall");
@@ -77,9 +81,11 @@ fn interpet_args() {
             command = "help";
         } else {
             command = &args[1];
-            let wm = String::from(get_config().trim());
+            let conf = get_config();
+            let wm = String::from(conf.0.trim());
+            let monitor = conf.1;
             match command.as_ref() {
-                "load" => load_theme(&args[2], wm),
+                "load" => load_theme(&args[2], wm, monitor),
                 "help" => print_help(),
                 _ => println!("Unknown command. raven help for commands."),
             }
@@ -87,7 +93,7 @@ fn interpet_args() {
     }
 }
 
-fn load_theme(theme_name: &str, wm: String) {
+fn load_theme(theme_name: &str, wm: String, monitor: i32) {
     if wm == String::from("i3") {
         println!("Using i3");
     }
@@ -112,7 +118,7 @@ fn load_theme(theme_name: &str, wm: String) {
             for option in &new_theme.options {
                 println!("{}", &option);
                 match option.as_ref() {
-                    "poly" => new_theme.load_poly(),
+                    "poly" => new_theme.load_poly(monitor),
                     "wm" => new_theme.load_wm(),
                     "xres" => new_theme.load_xres(false),
                     "xres_m" => new_theme.load_xres(true),
@@ -135,14 +141,14 @@ fn init() {
         .unwrap();
     println!("Correctly initialized base config. Please run again to use raven.");
 }
-fn get_config() -> (String) {
+fn get_config() -> (String, i32) {
     let mut conf = String::new();
     fs::File::open(get_home() + "/.config/raven/config")
         .expect("Couldn't read config")
         .read_to_string(&mut conf)
         .unwrap();
-    conf = String::from(conf.split('|').collect::<Vec<&str>>()[1]);
-    conf
+    let conf_vec = conf.split('|').collect::<Vec<&str>>();
+    (String::from(conf_vec[1].trim()), conf_vec[3].parse::<i32>().unwrap())
 }
 fn print_help() {
     println!("Commands:");
