@@ -25,12 +25,18 @@ impl Theme {
             get_home() + "/.config/raven/themes/" + &self.name + "/wm",
             get_home() + "/.config/i3/config",
         ).expect("Couldn't overwrite i3 config");
-        Command::new("sh")
-            .arg("-c")
-            .arg("i3-msg")
+        Command::new("i3-msg")
             .arg("reload")
             .spawn()
             .expect("Couldn't reload i3");
+    }
+    fn load_termite(&self) {
+        fs::copy(get_home()+"/.config/raven/themes/"+&self.name+"/termite",get_home()+"/.config/termite/config").expect("Couldn't overwrite termite config");
+        Command::new("pkill")
+            .arg("-SIGUSR1")
+            .arg("termite")
+            .spawn()
+            .expect("Couldn't reload termite");
     }
     fn load_poly(&self, monitor:i32) {
         let order:Vec<&str> = vec!["main", "other"];
@@ -123,6 +129,7 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) {
                     "xres" => new_theme.load_xres(false),
                     "xres_m" => new_theme.load_xres(true),
                     "wall" => new_theme.load_wall(),
+                    "termite" => new_theme.load_termite(),
                     _ => println!("Unknown option"),
                 };
             }
