@@ -30,13 +30,24 @@ new [theme] : create a new theme
 delete [theme] : delete a theme
 refresh : load last loaded theme
 edit [theme] : initialize editing [theme]
+add [option] [file] : add option to current theme
+rm [option] : remove option from current theme
 ```
 ## Configuration
-A Main config file is place in ~/.config/raven/config, which has two options:
+A main config file is place in ~/.config/raven/config, which has two options:
 ```
 window_manager: |[window manager in use. Currently only i3 is supported.]|
 monitor : |number of monitors available, to tell how many polybars to dupe.|
 ```
 
-To configure a theme, a specific format must be followed. This will be generated automatically later on, but for now run `raven new [theme]`. This will generate the basic framework in ~/.config/raven/themes. Within the theme file, place a | -deliminated list of 'options' you wish the theme to entail. Possible options right now are wm(for your configured wm), poly(polybar), xres(xresources), xres\_m(xresources to be merged, best for things like rofi configurations), wall(wallpaper), and termite(termite colorscheme/config). Within the same folder, put the config file to be used for each option, named that option. For instance, a wallpaper would be named `wall`, while a polybar config would be named `poly`.
+To configure a theme, start off by creating it with `raven new [theme]`. You'll automatically start editing taht theme. Run `raven add [option] [file]` to add a specific option. Available options are:
+
++ poly(Polybar)
++ termite(Termite config)
++ wm(window manager config)
++ wall(Wallpaper)
++ xres(Xresources)
++ xres\_m(Xresources, to be merged)
+
+This will copy the indicated file to raven's registry, and run/reload/copy it when the edited theme is loaded or refreshed. Run `raven rm [option]` to remove an option from a theme.
 

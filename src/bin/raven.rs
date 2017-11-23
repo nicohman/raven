@@ -41,11 +41,17 @@ impl Theme {
     }
     fn load_poly(&self, monitor: i32) {
         let order: Vec<&str> = vec!["main", "other"];
-        for number in (0..monitor) {
-            let out = Command::new("sh").arg("-c").arg(String::from("polybar --config=")+&get_home() + "/.config/raven/themes/" + &self.name + "/poly "+order[number as usize]+" &")
+        for number in 0..monitor {
+            let out = Command::new("sh")
+                .arg("-c")
+                .arg(
+                    String::from("polybar --config=") + &get_home() +
+                        "/.config/raven/themes/" + &self.name + "/poly " +
+                        order[number as usize] + " &",
+                )
                 .spawn()
                 .expect("Failed to run polybar");
-            println!("{:?}",out);
+            println!("{:?}", out);
         }
     }
     fn load_wall(&self) {
@@ -166,6 +172,7 @@ fn new_theme(theme_name: &str) {
     }
 }
 fn get_editing() -> String {
+    //Retrieve currently being edited theme
     let mut contents = String::new();
     fs::File::open(get_home() + "/.config/raven/editing")
         .expect("Couldn't open the currently being edited theme")
@@ -174,6 +181,7 @@ fn get_editing() -> String {
     contents
 }
 fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor: i32) {
+    //Add an option to a theme
     let mut cur_theme = load_theme(theme_name, wm, monitor).unwrap();
     let mut already_used = -1;
     cur_theme.options = cur_theme
@@ -212,30 +220,34 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor:
     ).expect("Couldn't copy config in");
 }
 fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
-    let mut cur_theme = load_theme(theme_name, wm, monitor).unwrap();
-    let mut newop:String = cur_theme
+    //Remove an option from a theme
+    let cur_theme = load_theme(theme_name, wm, monitor).unwrap();
+    let mut newop: String = cur_theme
         .options
         .iter()
         .filter(|x| x.len() > 0)
         .filter(|x| {
             let is = String::from(option).find(x.trim());
             is.is_none()
-        }).map(|x| String::from("|")+&x).collect::<String>();
+        })
+        .map(|x| String::from("|") + &x)
+        .collect::<String>();
     newop.push('|');
     let theme_path = get_home() + "/.config/raven/themes/" + &theme_name + "/theme";
     fs::remove_file(&theme_path).expect("Couldn't reset");
     OpenOptions::new()
         .create(true)
         .write(true)
-        .open(
-            theme_path
-        )
-        .expect("can open").write(newop.as_bytes()).expect("Couldn't write");
+        .open(theme_path)
+        .expect("can open")
+        .write(newop.as_bytes())
+        .expect("Couldn't write");
     fs::remove_file(
         get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
     ).expect("Couldn't remove option");
 }
 fn run_theme(new_theme: Theme) {
+    //Run/refresh a loaded Theme
     for option in &new_theme.options {
         println!("{} hi", &option);
         match option.to_lowercase().as_ref() {
@@ -285,7 +297,8 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
                 .unwrap();
             let options = theme
                 .split('|')
-                .map(|x| String::from(String::from(x).trim())).filter(|x| x.len() > 0)
+                .map(|x| String::from(String::from(x).trim()))
+                .filter(|x| x.len() > 0)
                 .collect::<Vec<String>>();
             println!("{}", options.len());
             new_theme = Theme {
@@ -337,6 +350,8 @@ fn print_help() {
     println!("delete [theme] : delete a theme");
     println!("refresh : load last loaded theme");
     println!("edit [theme] : initialize editing [theme]");
+    println!("add [option] [file] : add option to current theme");
+    println!("rm [option] : remove option from current theme");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
