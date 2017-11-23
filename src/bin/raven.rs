@@ -41,21 +41,14 @@ impl Theme {
     }
     fn load_poly(&self, monitor: i32) {
         let order: Vec<&str> = vec!["main", "other"];
-        for number in (0..monitor).rev() {
-            println!("POLY");
-            Command::new("polybar")
-                .arg("-c")
-                .arg(get_home() + "/.config/raven/themes/" + &self.name + "/poly")
-                .arg(order[number as usize])
+        for number in (0..monitor) {
+            let out = Command::new("sh").arg("-c").arg(String::from("polybar --config=")+&get_home() + "/.config/raven/themes/" + &self.name + "/poly "+order[number as usize]+" &")
                 .spawn()
                 .expect("Failed to run polybar");
+            println!("{:?}",out);
         }
     }
     fn load_wall(&self) {
-        println!(
-            "{}",
-            get_home() + "/.config/raven/themes/" + &self.name + "/wall"
-        );
         Command::new("feh")
             .arg("--bg-scale")
             .arg(get_home() + "/.config/raven/themes/" + &self.name + "/wall")
@@ -109,6 +102,7 @@ fn interpet_args() {
             "edit" => edit(&args[2]),
             "refresh" => refresh_theme(wm, monitor),
             "add" => add_to_theme(&get_editing(), &args[2], &args[3], wm, monitor),
+            "rm" => rm_from_theme(&get_editing(), &args[2], wm, monitor),
             _ => println!("Unknown command. raven help for commands."),
         }
 
@@ -182,35 +176,79 @@ fn get_editing() -> String {
 fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor: i32) {
     let mut cur_theme = load_theme(theme_name, wm, monitor).unwrap();
     let mut already_used = -1;
-    for number in 1..cur_theme.options.len() as i32 {
-        if &cur_theme.options[number as usize] == option {
-            already_used = number;
-        }
-    }
+    cur_theme.options = cur_theme
+        .options
+        .iter()
+        .map(|x| if x != option {
+            x.to_owned()
+        } else {
+            already_used = 1;
+            x.to_owned()
+        })
+        .collect::<Vec<String>>();
     if already_used == -1 {
         &cur_theme.options.push(String::from(option));
-    } else {
-
+        let mut newop = cur_theme
+            .options
+            .iter()
+            .filter(|x| x.len() > 0)
+            .map(|x| String::from("|") + &x)
+            .collect::<String>();
+        newop.push('|');
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(
+                get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
+            )
+            .expect("can open");
+        file.write_all(newop.as_bytes()).unwrap();
     }
     let mut totpath = env::current_dir().unwrap();
     totpath.push(path);
     fs::copy(
         totpath,
-        get_home() + "/.config/raven/themes/" + &theme_name + "/" +&option,
+        get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
     ).expect("Couldn't copy config in");
+}
+fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
+    let mut cur_theme = load_theme(theme_name, wm, monitor).unwrap();
+    let mut newop:String = cur_theme
+        .options
+        .iter()
+        .filter(|x| x.len() > 0)
+        .filter(|x| {
+            let is = String::from(option).find(x.trim());
+            is.is_none()
+        }).map(|x| String::from("|")+&x).collect::<String>();
+    newop.push('|');
+    let theme_path = get_home() + "/.config/raven/themes/" + &theme_name + "/theme";
+    fs::remove_file(&theme_path).expect("Couldn't reset");
+    OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(
+            theme_path
+        )
+        .expect("can open").write(newop.as_bytes()).expect("Couldn't write");
+    fs::remove_file(
+        get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
+    ).expect("Couldn't remove option");
 }
 fn run_theme(new_theme: Theme) {
     for option in &new_theme.options {
-        println!("{}", &option);
-        match option.as_ref() {
+        println!("{} hi", &option);
+        match option.to_lowercase().as_ref() {
             "poly" => new_theme.load_poly(new_theme.monitor),
             "wm" => new_theme.load_wm(),
             "xres" => new_theme.load_xres(false),
             "xres_m" => new_theme.load_xres(true),
             "wall" => new_theme.load_wall(),
             "termite" => new_theme.load_termite(),
+            "|" => {}
             _ => println!("Unknown option"),
         };
+
     }
     OpenOptions::new()
         .create(true)
@@ -247,8 +285,9 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
                 .unwrap();
             let options = theme
                 .split('|')
-                .map(|x| String::from(String::from(x).trim()))
+                .map(|x| String::from(String::from(x).trim())).filter(|x| x.len() > 0)
                 .collect::<Vec<String>>();
+            println!("{}", options.len());
             new_theme = Theme {
                 wm: String::from(wm.as_ref()),
                 name: String::from(theme_name),
