@@ -5,7 +5,6 @@ use std::io::Read;
 //use std::os::unix::fs::OpenOptionsExt;
 use std::env;
 use std::io::Write;
-use std::collections::HashMap;
 use std::process::Command;
 struct Theme {
     name: String,
@@ -25,24 +24,26 @@ impl Theme {
             get_home() + "/.config/raven/themes/" + &self.name + "/wm",
             get_home() + "/.config/i3/config",
         ).expect("Couldn't overwrite i3 config");
-        Command::new("i3-msg")
-            .arg("reload")
-            .spawn()
-            .expect("Couldn't reload i3");
+        Command::new("i3-msg").arg("reload").spawn().expect(
+            "Couldn't reload i3",
+        );
     }
     fn load_termite(&self) {
-        fs::copy(get_home()+"/.config/raven/themes/"+&self.name+"/termite",get_home()+"/.config/termite/config").expect("Couldn't overwrite termite config");
+        fs::copy(
+            get_home() + "/.config/raven/themes/" + &self.name + "/termite",
+            get_home() + "/.config/termite/config",
+        ).expect("Couldn't overwrite termite config");
         Command::new("pkill")
             .arg("-SIGUSR1")
             .arg("termite")
             .spawn()
             .expect("Couldn't reload termite");
     }
-    fn load_poly(&self, monitor:i32) {
-        let order:Vec<&str> = vec!["main", "other"];
+    fn load_poly(&self, monitor: i32) {
+        let order: Vec<&str> = vec!["main", "other"];
         for number in (0..monitor).rev() {
             println!("POLY");
-            let poly = Command::new("polybar")
+            Command::new("polybar")
                 .arg("-c")
                 .arg(get_home() + "/.config/raven/themes/" + &self.name + "/poly")
                 .arg(order[number as usize])
@@ -51,8 +52,11 @@ impl Theme {
         }
     }
     fn load_wall(&self) {
-        println!("{}",get_home() + "/.config/raven/themes/" + &self.name + "/wall");
-        let wall = Command::new("feh")
+        println!(
+            "{}",
+            get_home() + "/.config/raven/themes/" + &self.name + "/wall"
+        );
+        Command::new("feh")
             .arg("--bg-scale")
             .arg(get_home() + "/.config/raven/themes/" + &self.name + "/wall")
             .spawn()
@@ -87,18 +91,36 @@ fn interpet_args() {
             command = "help";
         } else {
             command = &args[1];
+        }
             let conf = get_config();
             let wm = String::from(conf.0.trim());
             let monitor = conf.1;
             match command.as_ref() {
                 "load" => load_theme(&args[2], wm, monitor),
+                "new" => new_theme(&args[2]),
                 "help" => print_help(),
                 _ => println!("Unknown command. raven help for commands."),
             }
-        }
+        
     }
 }
-
+fn new_theme(theme_name: &str) {
+    let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
+    if res.is_ok() {
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(
+                get_home() + "/.config/eidolon/themes/" + &theme_name + "/theme",
+            )
+            .unwrap();
+        file.write_all(
+        (String::from("|")).as_bytes(),
+    ).unwrap();
+    } else {
+        println!("Theme {} already exists", &theme_name);
+    }
+}
 fn load_theme(theme_name: &str, wm: String, monitor: i32) {
     if wm == String::from("i3") {
         println!("Using i3");
@@ -120,7 +142,11 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) {
                 .split('|')
                 .map(|x| String::from(String::from(x).trim()))
                 .collect::<Vec<String>>();
-            let mut new_theme = Theme {wm : String::from(wm.as_ref()),name : String::from(theme_name), options : options};
+            let new_theme = Theme {
+                wm: String::from(wm.as_ref()),
+                name: String::from(theme_name),
+                options: options,
+            };
             for option in &new_theme.options {
                 println!("{}", &option);
                 match option.as_ref() {
@@ -155,11 +181,16 @@ fn get_config() -> (String, i32) {
         .read_to_string(&mut conf)
         .unwrap();
     let conf_vec = conf.split('|').collect::<Vec<&str>>();
-    (String::from(conf_vec[1].trim()), conf_vec[3].parse::<i32>().unwrap())
+    (
+        String::from(conf_vec[1].trim()),
+        conf_vec[3].parse::<i32>().unwrap(),
+    )
 }
 fn print_help() {
     println!("Commands:");
     println!("help : show this screen");
+    println!("load [theme] : load a complete theme");
+    println!("new [theme] : create a new theme");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
