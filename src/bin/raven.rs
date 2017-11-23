@@ -10,6 +10,7 @@ struct Theme {
     name: String,
     options: Vec<String>,
     wm: String,
+    monitor: i32,
 }
 impl Theme {
     fn load_wm(&self) {
@@ -101,7 +102,7 @@ fn interpet_args() {
             clear_prev();
         }
         match cmd {
-            "load" => load_theme(&args[2], wm, monitor),
+            "load" => run_theme(load_theme(&args[2], wm, monitor).unwrap()),
             "new" => new_theme(&args[2]),
             "help" => print_help(),
             "delete" => del_theme(&args[2]),
@@ -144,7 +145,7 @@ fn refresh_theme(wm: String, monitor: i32) {
             .expect("Couldn't open the last theme")
             .read_to_string(&mut contents)
             .expect("Couldn't read the last theme");
-        load_theme(contents.trim(), wm, monitor);
+        run_theme(load_theme(contents.trim(), wm, monitor).unwrap());
     }
 }
 fn new_theme(theme_name: &str) {
@@ -169,11 +170,39 @@ fn new_theme(theme_name: &str) {
         println!("Theme {} already exists", &theme_name);
     }
 }
-fn load_theme(theme_name: &str, wm: String, monitor: i32) {
+fn run_theme(new_theme: Theme) {
+    for option in &new_theme.options {
+        println!("{}", &option);
+        match option.as_ref() {
+            "poly" => new_theme.load_poly(new_theme.monitor),
+            "wm" => new_theme.load_wm(),
+            "xres" => new_theme.load_xres(false),
+            "xres_m" => new_theme.load_xres(true),
+            "wall" => new_theme.load_wall(),
+            "termite" => new_theme.load_termite(),
+            _ => println!("Unknown option"),
+        };
+    }
+    OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(get_home() + "/.config/raven/last")
+        .expect("Couldn't open last theme file")
+        .write_all(&new_theme.name.as_bytes())
+        .expect("Couldn't write to last theme file");
+
+}
+fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'static str> {
     //Load in data for and run loading methods for a specific theme
     if wm == String::from("i3") {
         println!("Using i3");
     }
+    let mut new_theme:Theme = Theme {
+        wm: String::from("i3"),
+        monitor: 1,
+        options: vec![String::from("no")],
+        name: String::from("no"),
+    };
     let entries = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name)
         .expect("Can't read in theme directory");
     for entry in entries {
@@ -191,31 +220,18 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) {
                 .split('|')
                 .map(|x| String::from(String::from(x).trim()))
                 .collect::<Vec<String>>();
-            let new_theme = Theme {
+            new_theme = Theme {
                 wm: String::from(wm.as_ref()),
                 name: String::from(theme_name),
                 options: options,
+                monitor: monitor,
             };
-            for option in &new_theme.options {
-                println!("{}", &option);
-                match option.as_ref() {
-                    "poly" => new_theme.load_poly(monitor),
-                    "wm" => new_theme.load_wm(),
-                    "xres" => new_theme.load_xres(false),
-                    "xres_m" => new_theme.load_xres(true),
-                    "wall" => new_theme.load_wall(),
-                    "termite" => new_theme.load_termite(),
-                    _ => println!("Unknown option"),
-                };
-            }
-            OpenOptions::new()
-                .create(true)
-                .write(true)
-                .open(get_home() + "/.config/raven/last")
-                .expect("Couldn't open last theme file")
-                .write_all(String::from(theme_name).as_bytes())
-                .expect("Couldn't write to last theme file");
         }
+    }
+    if new_theme.name != String::from("no") {
+        Ok(new_theme)
+    } else {
+        Err("Can't find Theme data")
     }
 }
 fn init() {
