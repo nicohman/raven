@@ -108,6 +108,7 @@ fn interpet_args() {
             "delete" => del_theme(&args[2]),
             "edit" => edit(&args[2]),
             "refresh" => refresh_theme(wm, monitor),
+            "add" => add_to_theme(&get_editing(), &args[2], &args[3], wm, monitor),
             _ => println!("Unknown command. raven help for commands."),
         }
 
@@ -170,6 +171,34 @@ fn new_theme(theme_name: &str) {
         println!("Theme {} already exists", &theme_name);
     }
 }
+fn get_editing() -> String {
+    let mut contents = String::new();
+    fs::File::open(get_home() + "/.config/raven/editing")
+        .expect("Couldn't open the currently being edited theme")
+        .read_to_string(&mut contents)
+        .expect("Couldn't read the currently being edited theme");
+    contents
+}
+fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor: i32) {
+    let mut cur_theme = load_theme(theme_name, wm, monitor).unwrap();
+    let mut already_used = -1;
+    for number in 1..cur_theme.options.len() as i32 {
+        if &cur_theme.options[number as usize] == option {
+            already_used = number;
+        }
+    }
+    if already_used == -1 {
+        &cur_theme.options.push(String::from(option));
+    } else {
+
+    }
+    let mut totpath = env::current_dir().unwrap();
+    totpath.push(path);
+    fs::copy(
+        totpath,
+        get_home() + "/.config/raven/themes/" + &theme_name + "/" +&option,
+    ).expect("Couldn't copy config in");
+}
 fn run_theme(new_theme: Theme) {
     for option in &new_theme.options {
         println!("{}", &option);
@@ -197,7 +226,7 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
     if wm == String::from("i3") {
         println!("Using i3");
     }
-    let mut new_theme:Theme = Theme {
+    let mut new_theme: Theme = Theme {
         wm: String::from("i3"),
         monitor: 1,
         options: vec![String::from("no")],
