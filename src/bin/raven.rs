@@ -13,7 +13,6 @@ struct Theme {
 }
 impl Theme {
     fn load_wm(&self) {
-        let wm = &self.wm;
         match self.wm.as_ref() {
             "i3" => self.load_i3(),
             _ => println!("Unknown window manager"),
@@ -115,7 +114,7 @@ fn refresh_theme(wm: String, monitor: i32) {
         println!("No last theme saved. Cannot refresh.");
     } else {
         let mut contents = String::new();
-        let mut f = fs::File::open(get_home() + "/.config/raven/last")
+        fs::File::open(get_home() + "/.config/raven/last")
             .expect("Couldn't open the last theme")
             .read_to_string(&mut contents)
             .expect("Couldn't read the last theme");
@@ -198,7 +197,7 @@ fn init() {
         .write(true)
         .open(get_home() + "/.config/raven/config")
         .unwrap();
-    file.write_all((String::from("window_manager: |i3|\n")).as_bytes())
+    file.write_all((String::from("window_manager: |i3|\n|monitor: |1|")).as_bytes())
         .unwrap();
     println!("Correctly initialized base config. Please run again to use raven.");
 }
@@ -220,6 +219,7 @@ fn print_help() {
     println!("load [theme] : load a complete theme");
     println!("new [theme] : create a new theme");
     println!("delete [theme] : delete a theme");
+    println!("refresh : load last loaded theme");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
