@@ -94,7 +94,11 @@ fn interpet_args() {
         let conf = get_config();
         let wm = String::from(conf.0.trim());
         let monitor = conf.1;
-        match command.as_ref() {
+        let cmd = command.as_ref();
+        if cmd == "load" || cmd == "refresh" {
+            clear_prev();
+        }
+        match cmd {
             "load" => load_theme(&args[2], wm, monitor),
             "new" => new_theme(&args[2]),
             "help" => print_help(),
@@ -104,6 +108,9 @@ fn interpet_args() {
         }
 
     }
+}
+fn clear_prev(){
+    Command::new("pkill").arg("polybar").spawn().unwrap();
 }
 fn del_theme(theme_name: &str) {
     fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
