@@ -107,13 +107,15 @@ fn interpet_args() {
 fn new_theme(theme_name: &str) {
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if res.is_ok() {
+        res.unwrap();
+        println!("{}",get_home() + "/.config/raven/themes/" + &theme_name + "/theme");
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
             .open(
-                get_home() + "/.config/eidolon/themes/" + &theme_name + "/theme",
+                get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
             )
-            .unwrap();
+            .expect("can open");
         file.write_all(
         (String::from("|")).as_bytes(),
     ).unwrap();
