@@ -92,27 +92,44 @@ fn interpet_args() {
         } else {
             command = &args[1];
         }
-            let conf = get_config();
-            let wm = String::from(conf.0.trim());
-            let monitor = conf.1;
-            match command.as_ref() {
-                "load" => load_theme(&args[2], wm, monitor),
-                "new" => new_theme(&args[2]),
-                "help" => print_help(),
-                "delete" => del_theme(&args[2]),
-                _ => println!("Unknown command. raven help for commands."),
-            }
-        
+        let conf = get_config();
+        let wm = String::from(conf.0.trim());
+        let monitor = conf.1;
+        match command.as_ref() {
+            "load" => load_theme(&args[2], wm, monitor),
+            "new" => new_theme(&args[2]),
+            "help" => print_help(),
+            "delete" => del_theme(&args[2]),
+            "refresh" => refresh_theme(wm, monitor),
+            _ => println!("Unknown command. raven help for commands."),
+        }
+
     }
 }
-fn del_theme(theme_name:&str) {
-    fs::remove_dir_all(get_home()+"/.config/raven/themes/"+&theme_name).expect("Couldn't delete theme");;
+fn del_theme(theme_name: &str) {
+    fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
+        .expect("Couldn't delete theme");;
+}
+fn refresh_theme(wm: String, monitor: i32) {
+    if fs::metadata(get_home() + "/.config/raven/last").is_err() {
+        println!("No last theme saved. Cannot refresh.");
+    } else {
+        let mut contents = String::new();
+        let mut f = fs::File::open(get_home() + "/.config/raven/last")
+            .expect("Couldn't open the last theme")
+            .read_to_string(&mut contents)
+            .expect("Couldn't read the last theme");
+        load_theme(contents.trim(), wm, monitor);
+    }
 }
 fn new_theme(theme_name: &str) {
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if res.is_ok() {
         res.unwrap();
-        println!("{}",get_home() + "/.config/raven/themes/" + &theme_name + "/theme");
+        println!(
+            "{}",
+            get_home() + "/.config/raven/themes/" + &theme_name + "/theme"
+        );
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -120,9 +137,7 @@ fn new_theme(theme_name: &str) {
                 get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
             )
             .expect("can open");
-        file.write_all(
-        (String::from("|")).as_bytes(),
-    ).unwrap();
+        file.write_all((String::from("|")).as_bytes()).unwrap();
     } else {
         println!("Theme {} already exists", &theme_name);
     }
@@ -165,6 +180,13 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) {
                     _ => println!("Unknown option"),
                 };
             }
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(get_home() + "/.config/raven/last")
+                .expect("Couldn't open last theme file")
+                .write_all(String::from(theme_name).as_bytes())
+                .expect("Couldn't write to last theme file");
         }
     }
 }
