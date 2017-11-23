@@ -2,10 +2,10 @@ use std::fs;
 use std::fs::DirEntry;
 use std::fs::OpenOptions;
 use std::io::Read;
-//use std::os::unix::fs::OpenOptionsExt;
 use std::env;
 use std::io::Write;
 use std::process::Command;
+//Structure that holds all methods and data for individual themes.
 struct Theme {
     name: String,
     options: Vec<String>,
@@ -78,6 +78,7 @@ fn main() {
     interpet_args();
 }
 fn interpet_args() {
+    //Interpet arguments and check for a need to run init()
     if fs::metadata(get_home() + "/.config/raven").is_err() ||
         fs::metadata(get_home() + "/.config/raven/config").is_err() ||
         fs::metadata(get_home() + "/.config/raven/themes").is_err()
@@ -95,6 +96,7 @@ fn interpet_args() {
         let wm = String::from(conf.0.trim());
         let monitor = conf.1;
         let cmd = command.as_ref();
+        //If a theme may be changing, kill the previous theme's processes. Currently only polybar
         if cmd == "load" || cmd == "refresh" {
             clear_prev();
         }
@@ -111,6 +113,7 @@ fn interpet_args() {
     }
 }
 fn edit(theme_name: &str) {
+    //Add and rm commands will affect the theme you are currently editing
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
         OpenOptions::new()
             .create(true)
@@ -132,6 +135,7 @@ fn del_theme(theme_name: &str) {
         .expect("Couldn't delete theme");;
 }
 fn refresh_theme(wm: String, monitor: i32) {
+    //Load last loaded theme
     if fs::metadata(get_home() + "/.config/raven/last").is_err() {
         println!("No last theme saved. Cannot refresh.");
     } else {
@@ -144,6 +148,7 @@ fn refresh_theme(wm: String, monitor: i32) {
     }
 }
 fn new_theme(theme_name: &str) {
+    //Create new theme directory and 'theme' file
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if res.is_ok() {
         res.unwrap();
@@ -165,6 +170,7 @@ fn new_theme(theme_name: &str) {
     }
 }
 fn load_theme(theme_name: &str, wm: String, monitor: i32) {
+    //Load in data for and run loading methods for a specific theme
     if wm == String::from("i3") {
         println!("Using i3");
     }
@@ -213,6 +219,7 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) {
     }
 }
 fn init() {
+    //Create base raven directories and config file(s)
     fs::create_dir(get_home() + "/.config/raven").unwrap();
     fs::create_dir(get_home() + "/.config/raven/themes").unwrap();
     let mut file = OpenOptions::new()
@@ -226,6 +233,7 @@ fn init() {
     println!("Correctly initialized base config. Please run again to use raven.");
 }
 fn get_config() -> (String, i32) {
+    //Retrieve config settings from file
     let mut conf = String::new();
     fs::File::open(get_home() + "/.config/raven/config")
         .expect("Couldn't read config")
@@ -244,7 +252,7 @@ fn print_help() {
     println!("new [theme] : create a new theme");
     println!("delete [theme] : delete a theme");
     println!("refresh : load last loaded theme");
-    println!("edit [theme] : initialize editing [theme]"); 
+    println!("edit [theme] : initialize editing [theme]");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
