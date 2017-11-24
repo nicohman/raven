@@ -5,6 +5,7 @@ use std::io::Read;
 use std::env;
 use std::io::Write;
 use std::process::Command;
+use std::io;
 //Structure that holds all methods and data for individual themes.
 struct Theme {
     name: String,
@@ -95,6 +96,7 @@ fn interpet_args() {
         let conf = get_config();
         let wm = String::from(conf.0.trim());
         let monitor = conf.1;
+        let menu_command = conf.2;
         let cmd = command.as_ref();
         //If a theme may be changing, kill the previous theme's processes. Currently only polybar
         if cmd == "load" || cmd == "refresh" {
@@ -109,10 +111,27 @@ fn interpet_args() {
             "refresh" => refresh_theme(wm, monitor),
             "add" => add_to_theme(&get_editing(), &args[2], &args[3], wm, monitor),
             "rm" => rm_from_theme(&get_editing(), &args[2], wm, monitor),
+            "menu" => show_menu(menu_command, wm, monitor),
             _ => println!("Unknown command. raven help for commands."),
         }
 
     }
+}
+fn show_menu(menu_command: String, wm: String, monitor: i32){
+    let mut theme_list = String::new();
+    let mut entries = fs::read_dir(get_home()+"/.config/raven/themes").expect("Couldn't read themes").collect::<Vec<io::Result<DirEntry>>>().into_iter().map(|x| proc_path(x.unwrap())).collect::<Vec<String>>();
+    entries.sort_by(|a,b| a.cmp(&b));
+    for entry in entries {
+        theme_list.push_str(&entry);
+        theme_list.push_str("\n");
+    }
+        let output = Command::new("sh")
+        .arg("-c")
+        .arg(String::from("echo '") + &theme_list + "' | " + &menu_command)
+        .output()
+        .expect("Failed to run menu.");
+        clear_prev();
+    run_theme(load_theme(&String::from_utf8_lossy(&output.stdout).trim(), wm, monitor).unwrap());
 }
 fn edit(theme_name: &str) {
     //Add and rm commands will affect the theme you are currently editing
@@ -325,11 +344,11 @@ fn init() {
         .open(get_home() + "/.config/raven/config")
         .unwrap();
     file.write_all(
-        (String::from("window_manager: |i3|\n|monitor: |1|")).as_bytes(),
+        (String::from("window_manager: |i3|\n|monitor: |1|\nmenu_command:|rofi -theme sidebar -mesg 'raven theme:' -p '> ' -dmenu |")).as_bytes(),
     ).unwrap();
     println!("Correctly initialized base config. Please run again to use raven.");
 }
-fn get_config() -> (String, i32) {
+fn get_config() -> (String, i32, String) {
     //Retrieve config settings from file
     let mut conf = String::new();
     fs::File::open(get_home() + "/.config/raven/config")
@@ -340,6 +359,7 @@ fn get_config() -> (String, i32) {
     (
         String::from(conf_vec[1].trim()),
         conf_vec[3].parse::<i32>().unwrap(),
+        String::from(conf_vec[5].trim()),
     )
 }
 fn print_help() {
