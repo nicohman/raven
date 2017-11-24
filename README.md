@@ -22,7 +22,7 @@ The following packages are required for their relevant options:
 + [i3](https://github.com/i3/i3): `wm`
 
 ## Usage
-Currently WIP. There is no easy way to create new themes, but that shall quickly be remedied. Until then, `raven help` for a list of available commands:
+`raven help` for a list of available commands:
 ```Commands:
 help : show this screen
 load [theme] : load a complete theme
