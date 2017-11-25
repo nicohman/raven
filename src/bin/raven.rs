@@ -21,10 +21,27 @@ impl Theme {
         }
     }
     fn load_i3(&self) {
-        fs::copy(
-            get_home() + "/.config/raven/themes/" + &self.name + "/wm",
-            get_home() + "/.config/i3/config",
-        ).expect("Couldn't overwrite i3 config");
+        let mut config = String::new();
+        if fs::metadata(get_home() + "/.config/raven/base_i3").is_ok() {
+            fs::File::open(get_home() + "/.config/raven/base_i3")
+                .unwrap()
+                .read_to_string(&mut config)
+                .unwrap();
+        }
+        let mut app = String::new();
+        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/wm")
+            .unwrap()
+            .read_to_string(&mut app)
+            .unwrap();
+        config.push_str(&app);
+        fs::remove_file(get_home() + "/.config/i3/config").unwrap();
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(get_home() + "/.config/i3/config")
+            .expect("Couldn't open i3 file")
+            .write_all(config.as_bytes())
+            .unwrap();
         Command::new("i3-msg").arg("reload").spawn().expect(
             "Couldn't reload i3",
         );
@@ -48,7 +65,7 @@ impl Theme {
                 .arg(
                     String::from("polybar --config=") + &get_home() +
                         "/.config/raven/themes/" + &self.name + "/poly " +
-                        order[number as usize] + " &",
+                        order[number as usize] + " > /dev/null",
                 )
                 .spawn()
                 .expect("Failed to run polybar");
@@ -117,25 +134,35 @@ fn interpet_args() {
 
     }
 }
-fn show_menu(menu_command: String, wm: String, monitor: i32){
+fn show_menu(menu_command: String, wm: String, monitor: i32) {
     let mut theme_list = String::new();
-    let mut entries = fs::read_dir(get_home()+"/.config/raven/themes").expect("Couldn't read themes").collect::<Vec<io::Result<DirEntry>>>().into_iter().map(|x| proc_path(x.unwrap())).collect::<Vec<String>>();
-    entries.sort_by(|a,b| a.cmp(&b));
+    let mut entries = fs::read_dir(get_home() + "/.config/raven/themes")
+        .expect("Couldn't read themes")
+        .collect::<Vec<io::Result<DirEntry>>>()
+        .into_iter()
+        .map(|x| proc_path(x.unwrap()))
+        .collect::<Vec<String>>();
+    entries.sort_by(|a, b| a.cmp(&b));
     for entry in entries {
         theme_list.push_str(&entry);
         theme_list.push_str("\n");
     }
-        let output = Command::new("sh")
+    let output = Command::new("sh")
         .arg("-c")
-        .arg(String::from("echo '") + &theme_list + "' | " + &menu_command)
+        .arg(
+            String::from("echo '") + &theme_list + "' | " + &menu_command,
+        )
         .output()
         .expect("Failed to run menu.");
-        clear_prev();
-    run_theme(load_theme(&String::from_utf8_lossy(&output.stdout).trim(), wm, monitor).unwrap());
+    clear_prev();
+    run_theme(
+        load_theme(&String::from_utf8_lossy(&output.stdout).trim(), wm, monitor).unwrap(),
+    );
 }
 fn edit(theme_name: &str) {
     //Add and rm commands will affect the theme you are currently editing
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
+        fs::remove_file(get_home()+"/.config/raven/last").unwrap();
         OpenOptions::new()
             .create(true)
             .write(true)
@@ -268,7 +295,6 @@ fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
 fn run_theme(new_theme: Theme) {
     //Run/refresh a loaded Theme
     for option in &new_theme.options {
-        println!("{} hi", &option);
         match option.to_lowercase().as_ref() {
             "poly" => new_theme.load_poly(new_theme.monitor),
             "wm" => new_theme.load_wm(),
