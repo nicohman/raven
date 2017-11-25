@@ -32,6 +32,7 @@ refresh : load last loaded theme
 edit [theme] : initialize editing [theme]
 add [option] [file] : add option to current theme
 rm [option] : remove option from current theme
+menu : show theme menu
 ```
 ## Configuration
 A main config file is place in ~/.config/raven/config, which has two options:
@@ -49,5 +50,6 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 + xres(Xresources)
 + xres\_m(Xresources, to be merged)
 
+If you place an i3 config named base\_i3 in ~/.config/raven, the contents of wm for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme.
 This will copy the indicated file to raven's registry, and run/reload/copy it when the edited theme is loaded or refreshed. Run `raven rm [option]` to remove an option from a theme.
 
