@@ -162,7 +162,7 @@ fn show_menu(menu_command: String, wm: String, monitor: i32) {
 fn edit(theme_name: &str) {
     //Add and rm commands will affect the theme you are currently editing
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
-        fs::remove_file(get_home()+"/.config/raven/last").unwrap();
+        fs::remove_file(get_home()+"/.config/raven/edittin").unwrap();
         OpenOptions::new()
             .create(true)
             .write(true)
@@ -307,6 +307,7 @@ fn run_theme(new_theme: Theme) {
         };
 
     }
+    fs::remove_file(get_home()+"/.config/raven/last").unwrap();
     OpenOptions::new()
         .create(true)
         .write(true)
@@ -398,6 +399,7 @@ fn print_help() {
     println!("edit [theme] : initialize editing [theme]");
     println!("add [option] [file] : add option to current theme");
     println!("rm [option] : remove option from current theme");
+    println!("menu : show theme menu");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
