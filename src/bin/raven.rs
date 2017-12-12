@@ -162,7 +162,7 @@ fn show_menu(menu_command: String, wm: String, monitor: i32) {
 fn edit(theme_name: &str) {
     //Add and rm commands will affect the theme you are currently editing
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
-        fs::remove_file(get_home()+"/.config/raven/edittin").unwrap();
+        fs::remove_file(get_home()+"/.config/raven/editing").unwrap();
         OpenOptions::new()
             .create(true)
             .write(true)
