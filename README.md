@@ -41,7 +41,7 @@ window_manager: |[window manager in use. Currently only i3 is supported.]|
 monitor : |number of monitors available, to tell how many polybars to dupe.|
 ```
 
-To configure a theme, start off by creating it with `raven new [theme]`. You'll automatically start editing taht theme. Run `raven add [option] [file]` to add a specific option. Available options are:
+To configure a theme, start off by creating it with `raven new [theme]`. You'll automatically start editing that theme. Run `raven add [option] [file]` to add a specific option. Available options are:
 
 + poly(Polybar)
 + termite(Termite config)
