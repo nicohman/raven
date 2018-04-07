@@ -69,7 +69,7 @@ impl Theme {
                 )
                 .spawn()
                 .expect("Failed to run polybar");
-            println!("{:?}", out);
+            //println!("{:?}", out);
         }
     }
     fn load_wall(&self) {
@@ -116,6 +116,12 @@ fn interpet_args() {
         let menu_command = conf.2;
         let cmd = command.as_ref();
         //If a theme may be changing, kill the previous theme's processes. Currently only polybar
+        if args.len() > 1 {
+        if !check_args_cmd(args.len() -2 , cmd) {
+            println!("Not enough arguments for {}", &cmd);
+            ::std::process::exit(64);
+        }
+        }
         if cmd == "load" || cmd == "refresh" {
             clear_prev();
         }
@@ -132,6 +138,22 @@ fn interpet_args() {
             _ => println!("Unknown command. raven help for commands."),
         }
 
+    }
+}
+fn check_args_cmd(num:usize, command:&str) -> bool{
+    let need = match command {
+        "load" => 1,
+        "new" => 1,
+        "rm" => 1,
+        "edit" => 1,
+        "add" => 2,
+        "delete" => 1,
+        _ => 0,
+    };
+    if num < need {
+        false
+    } else {
+        true
     }
 }
 fn show_menu(menu_command: String, wm: String, monitor: i32) {
@@ -155,9 +177,13 @@ fn show_menu(menu_command: String, wm: String, monitor: i32) {
         .output()
         .expect("Failed to run menu.");
     clear_prev();
-    run_theme(
-        load_theme(&String::from_utf8_lossy(&output.stdout).trim(), wm, monitor).unwrap(),
-    );
+    let theme = load_theme(&String::from_utf8_lossy(&output.stdout).trim(), wm, monitor);
+    if theme.is_err() {
+        println!("Could not load in theme data. Does it exist?");
+    }   else {
+        run_theme(theme.unwrap());
+    }
+    
 }
 fn edit(theme_name: &str) {
     //Add and rm commands will affect the theme you are currently editing
@@ -319,17 +345,18 @@ fn run_theme(new_theme: Theme) {
 }
 fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'static str> {
     //Load in data for and run loading methods for a specific theme
-    if wm == String::from("i3") {
+    /*if wm == String::from("i3") {
         println!("Using i3");
-    }
+    }*/
     let mut new_theme: Theme = Theme {
         wm: String::from("i3"),
         monitor: 1,
         options: vec![String::from("no")],
         name: String::from("no"),
     };
-    let entries = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name)
-        .expect("Can't read in theme directory");
+    let ent_res = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name);
+    if ent_res.is_ok() {
+    let entries = ent_res.unwrap();
     for entry in entries {
         let entry = proc_path(entry.unwrap());
         //println!("{}",entry);
@@ -346,7 +373,7 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
                 .map(|x| String::from(String::from(x).trim()))
                 .filter(|x| x.len() > 0)
                 .collect::<Vec<String>>();
-            println!("{}", options.len());
+            //println!("{}", options.len());
             new_theme = Theme {
                 wm: String::from(wm.as_ref()),
                 name: String::from(theme_name),
@@ -354,6 +381,10 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
                 monitor: monitor,
             };
         }
+    }
+    } else {
+        println!("Theme does not exist.");
+        ::std::process::exit(64);
     }
     if new_theme.name != String::from("no") {
         Ok(new_theme)
@@ -383,11 +414,16 @@ fn get_config() -> (String, i32, String) {
         .read_to_string(&mut conf)
         .unwrap();
     let conf_vec = conf.split('|').collect::<Vec<&str>>();
+    if conf_vec.len() == 7 {
     (
         String::from(conf_vec[1].trim()),
         conf_vec[3].parse::<i32>().unwrap(),
         String::from(conf_vec[5].trim()),
     )
+    } else {
+        println!("Config file not in correct format.");
+        std::process::exit(0);
+    }
 }
 fn print_help() {
     println!("Commands:");
