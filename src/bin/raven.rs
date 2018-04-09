@@ -44,13 +44,13 @@ impl Theme {
             .unwrap();
         Command::new("i3-msg").arg("reload").spawn().expect(
             "Couldn't reload i3",
-        );
+            );
     }
     fn load_termite(&self) {
         fs::copy(
             get_home() + "/.config/raven/themes/" + &self.name + "/termite",
             get_home() + "/.config/termite/config",
-        ).expect("Couldn't overwrite termite config");
+            ).expect("Couldn't overwrite termite config");
         Command::new("pkill")
             .arg("-SIGUSR1")
             .arg("termite")
@@ -64,9 +64,9 @@ impl Theme {
                 .arg("-c")
                 .arg(
                     String::from("polybar --config=") + &get_home() +
-                        "/.config/raven/themes/" + &self.name + "/poly " +
-                        order[number as usize] + " > /dev/null",
-                )
+                    "/.config/raven/themes/" + &self.name + "/poly " +
+                    order[number as usize] + " > /dev/null",
+                    )
                 .spawn()
                 .expect("Failed to run polybar");
             //println!("{:?}", out);
@@ -88,7 +88,7 @@ impl Theme {
         }
         xres.arg(
             get_home() + "/.config/raven/themes/" + &self.name + "/" + &name,
-        ).spawn()
+            ).spawn()
             .expect("Could not run xrdb");
     }
 }
@@ -99,46 +99,47 @@ fn interpet_args() {
     //Interpet arguments and check for a need to run init()
     if fs::metadata(get_home() + "/.config/raven").is_err() ||
         fs::metadata(get_home() + "/.config/raven/config").is_err() ||
-        fs::metadata(get_home() + "/.config/raven/themes").is_err()
-    {
-        init();
-    } else {
-        let args: Vec<String> = env::args().collect();
-        let command: &str;
-        if args.len() < 2 {
-            command = "help";
-        } else {
-            command = &args[1];
-        }
-        let conf = get_config();
-        let wm = String::from(conf.0.trim());
-        let monitor = conf.1;
-        let menu_command = conf.2;
-        let cmd = command.as_ref();
-        //If a theme may be changing, kill the previous theme's processes. Currently only polybar
-        if args.len() > 1 {
-        if !check_args_cmd(args.len() -2 , cmd) {
-            println!("Not enough arguments for {}", &cmd);
-            ::std::process::exit(64);
-        }
-        }
-        if cmd == "load" || cmd == "refresh" {
-            clear_prev();
-        }
-        match cmd {
-            "load" => run_theme(load_theme(&args[2], wm, monitor).unwrap()),
-            "new" => new_theme(&args[2]),
-            "help" => print_help(),
-            "delete" => del_theme(&args[2]),
-            "edit" => edit(&args[2]),
-            "refresh" => refresh_theme(wm, monitor),
-            "add" => add_to_theme(&get_editing(), &args[2], &args[3], wm, monitor),
-            "rm" => rm_from_theme(&get_editing(), &args[2], wm, monitor),
-            "menu" => show_menu(menu_command, wm, monitor),
-            _ => println!("Unknown command. raven help for commands."),
-        }
+            fs::metadata(get_home() + "/.config/raven/themes").is_err()
+            {
+                init();
+            } else {
+                let args: Vec<String> = env::args().collect();
+                let command: &str;
+                if args.len() < 2 {
+                    command = "help";
+                } else {
+                    command = &args[1];
+                }
+                let conf = get_config();
+                let wm = String::from(conf.0.trim());
+                let monitor = conf.1;
+                let menu_command = conf.2;
+                let cmd = command.as_ref();
+                //If a theme may be changing, kill the previous theme's processes. Currently only polybar
+                if args.len() > 1 {
+                    if !check_args_cmd(args.len() -2 , cmd) {
+                        println!("Not enough arguments for {}", &cmd);
+                        ::std::process::exit(64);
+                    }
+                }
+                if cmd == "load" || cmd == "refresh" {
+                    clear_prev();
+                }
+                match cmd {
+                    "load" => run_theme(load_theme(&args[2], wm, monitor).unwrap()),
+                    "new" => new_theme(&args[2]),
+                    "help" => print_help(),
+                    "delete" => del_theme(&args[2]),
+                    "edit" => edit(&args[2]),
+                    "cycle" => manage_daemon(&args[2]),
+                    "refresh" => refresh_theme(wm, monitor),
+                    "add" => add_to_theme(&get_editing(), &args[2], &args[3], wm, monitor),
+                    "rm" => rm_from_theme(&get_editing(), &args[2], wm, monitor),
+                    "menu" => show_menu(menu_command, wm, monitor),
+                    _ => println!("Unknown command. raven help for commands."),
+                }
 
-    }
+            }
 }
 fn check_args_cmd(num:usize, command:&str) -> bool{
     let need = match command {
@@ -154,6 +155,56 @@ fn check_args_cmd(num:usize, command:&str) -> bool{
         false
     } else {
         true
+    }
+}
+fn start_daemon() {
+    Command::new("sh").arg("-c").arg("ravend").spawn().expect("Couldn't start daemon.");
+    println!("Started cycle daemon.");
+
+}
+fn stop_daemon() {
+    Command::new("pkill").arg("-SIGKILL").arg("ravend").output().expect("Couldn't stop daemon.");
+    println!("Stopped cycle daemon.");
+}
+fn check_daemon() -> bool {
+    let out = Command::new("ps").arg("aux").output().expect("Couldn't find daemon");
+    let mut formOut =  String::from_utf8_lossy(&out.stdout);
+    let lineNum = formOut.lines().filter(|x| {
+        x.contains("ravend")
+    }).count();
+    if lineNum > 0 {
+        true
+    } else {
+        false
+    }
+}
+fn manage_daemon(command: &str){
+    let running = check_daemon();
+    match command {
+        "check" => {
+            if running {
+                println!("Cycle daemon running.");
+            } else {
+                println!("Cycle daemon not running.");
+            }
+        },
+        "start" => {
+            if !running {
+                start_daemon();
+            } else {
+                println!("Cycle daemon already running.");
+            }
+        },
+        "stop" => {
+            if running {
+                stop_daemon();
+            } else {
+                println!("Cycle daemon not running.");
+            }
+        },
+        _ => {
+            println!("Not a possible command.");
+        }
     }
 }
 fn show_menu(menu_command: String, wm: String, monitor: i32) {
@@ -173,7 +224,7 @@ fn show_menu(menu_command: String, wm: String, monitor: i32) {
         .arg("-c")
         .arg(
             String::from("echo '") + &theme_list + "' | " + &menu_command,
-        )
+            )
         .output()
         .expect("Failed to run menu.");
     clear_prev();
@@ -183,7 +234,7 @@ fn show_menu(menu_command: String, wm: String, monitor: i32) {
     }   else {
         run_theme(theme.unwrap());
     }
-    
+
 }
 fn edit(theme_name: &str) {
     //Add and rm commands will affect the theme you are currently editing
@@ -229,13 +280,13 @@ fn new_theme(theme_name: &str) {
         println!(
             "{}",
             get_home() + "/.config/raven/themes/" + &theme_name + "/theme"
-        );
+            );
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
             .open(
                 get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
-            )
+                )
             .expect("can open");
         file.write_all((String::from("|")).as_bytes()).unwrap();
         edit(&theme_name);
@@ -265,7 +316,7 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor:
             already_used = 1;
             x.to_owned()
         })
-        .collect::<Vec<String>>();
+    .collect::<Vec<String>>();
     if already_used == -1 {
         &cur_theme.options.push(String::from(option));
         let mut newop = cur_theme
@@ -280,7 +331,7 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor:
             .write(true)
             .open(
                 get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
-            )
+                )
             .expect("can open");
         file.write_all(newop.as_bytes()).unwrap();
     }
@@ -289,7 +340,7 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str, wm: String, monitor:
     fs::copy(
         totpath,
         get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
-    ).expect("Couldn't copy config in");
+        ).expect("Couldn't copy config in");
 }
 fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
     //Remove an option from a theme
@@ -302,7 +353,7 @@ fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
             let is = String::from(option).find(x.trim());
             is.is_none()
         })
-        .map(|x| String::from("|") + &x)
+    .map(|x| String::from("|") + &x)
         .collect::<String>();
     newop.push('|');
     let theme_path = get_home() + "/.config/raven/themes/" + &theme_name + "/theme";
@@ -316,7 +367,7 @@ fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
         .expect("Couldn't write");
     fs::remove_file(
         get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
-    ).expect("Couldn't remove option");
+        ).expect("Couldn't remove option");
 }
 fn run_theme(new_theme: Theme) {
     //Run/refresh a loaded Theme
@@ -346,8 +397,8 @@ fn run_theme(new_theme: Theme) {
 fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'static str> {
     //Load in data for and run loading methods for a specific theme
     /*if wm == String::from("i3") {
-        println!("Using i3");
-    }*/
+      println!("Using i3");
+      }*/
     let mut new_theme: Theme = Theme {
         wm: String::from("i3"),
         monitor: 1,
@@ -356,32 +407,32 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
     };
     let ent_res = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if ent_res.is_ok() {
-    let entries = ent_res.unwrap();
-    for entry in entries {
-        let entry = proc_path(entry.unwrap());
-        //println!("{}",entry);
-        if String::from(entry).trim() == String::from("theme") {
-            println!("Found theme {}", theme_name);
-            let mut theme = String::new();
-            fs::File::open(
-                get_home() + "/.config/raven/themes/" + theme_name + "/theme",
-            ).expect("Couldn't read theme")
-                .read_to_string(&mut theme)
-                .unwrap();
-            let options = theme
-                .split('|')
-                .map(|x| String::from(String::from(x).trim()))
-                .filter(|x| x.len() > 0)
-                .collect::<Vec<String>>();
-            //println!("{}", options.len());
-            new_theme = Theme {
-                wm: String::from(wm.as_ref()),
-                name: String::from(theme_name),
-                options: options,
-                monitor: monitor,
-            };
+        let entries = ent_res.unwrap();
+        for entry in entries {
+            let entry = proc_path(entry.unwrap());
+            //println!("{}",entry);
+            if String::from(entry).trim() == String::from("theme") {
+                println!("Found theme {}", theme_name);
+                let mut theme = String::new();
+                fs::File::open(
+                    get_home() + "/.config/raven/themes/" + theme_name + "/theme",
+                    ).expect("Couldn't read theme")
+                    .read_to_string(&mut theme)
+                    .unwrap();
+                let options = theme
+                    .split('|')
+                    .map(|x| String::from(String::from(x).trim()))
+                    .filter(|x| x.len() > 0)
+                    .collect::<Vec<String>>();
+                //println!("{}", options.len());
+                new_theme = Theme {
+                    wm: String::from(wm.as_ref()),
+                    name: String::from(theme_name),
+                    options: options,
+                    monitor: monitor,
+                };
+            }
         }
-    }
     } else {
         println!("Theme does not exist.");
         ::std::process::exit(64);
@@ -403,7 +454,7 @@ fn init() {
         .unwrap();
     file.write_all(
         (String::from("window_manager: |i3|\n|monitor: |1|\nmenu_command:|rofi -theme sidebar -mesg 'raven theme:' -p '> ' -dmenu |")).as_bytes(),
-    ).unwrap();
+        ).unwrap();
     println!("Correctly initialized base config. Please run again to use raven.");
 }
 fn get_config() -> (String, i32, String) {
@@ -415,11 +466,11 @@ fn get_config() -> (String, i32, String) {
         .unwrap();
     let conf_vec = conf.split('|').collect::<Vec<&str>>();
     if conf_vec.len() == 7 {
-    (
-        String::from(conf_vec[1].trim()),
-        conf_vec[3].parse::<i32>().unwrap(),
-        String::from(conf_vec[5].trim()),
-    )
+        (
+            String::from(conf_vec[1].trim()),
+            conf_vec[3].parse::<i32>().unwrap(),
+            String::from(conf_vec[5].trim()),
+            )
     } else {
         println!("Config file not in correct format.");
         std::process::exit(0);
@@ -435,6 +486,7 @@ fn print_help() {
     println!("edit [theme] : initialize editing [theme]");
     println!("add [option] [file] : add option to current theme");
     println!("rm [option] : remove option from current theme");
+    println!("cycle {{check|start|stop}} : manage theme cycling daemon");
     println!("menu : show theme menu");
 }
 fn get_home() -> String {
