@@ -20,6 +20,13 @@ impl Theme {
             _ => println!("Unknown window manager"),
         }
     }
+    fn load_ncm(&self) {
+            fs::copy(
+            get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
+            get_home() + "/.ncmpcpp/config",
+            ).expect("Couldn't overwrite ncmpcpp config");
+
+    }
     fn load_i3(&self) {
         let mut config = String::new();
         if fs::metadata(get_home() + "/.config/raven/base_i3").is_ok() {
@@ -129,6 +136,7 @@ fn interpet_args() {
                     "load" => run_theme(load_theme(&args[2], wm, monitor).unwrap()),
                     "new" => new_theme(&args[2]),
                     "help" => print_help(),
+                    "modify" => modify_file(&args[2]),
                     "delete" => del_theme(&args[2]),
                     "edit" => edit(&args[2]),
                     "cycle" => manage_daemon(&args[2]),
@@ -146,6 +154,7 @@ fn check_args_cmd(num:usize, command:&str) -> bool{
         "load" => 1,
         "new" => 1,
         "rm" => 1,
+        "modify" => 1,
         "edit" => 1,
         "add" => 2,
         "delete" => 1,
@@ -156,6 +165,11 @@ fn check_args_cmd(num:usize, command:&str) -> bool{
     } else {
         true
     }
+}
+fn modify_file(file: &str){
+    let editing = get_editing();
+    let editor = env::var_os("EDITOR").expect("Could not fetch $EDITOR from OS");
+    Command::new(editor).arg(get_home()+"/.config/raven/themes/"+&editing+"/"+file).spawn().expect("Couldn't run $EDITOR");
 }
 fn start_daemon() {
     Command::new("sh").arg("-c").arg("ravend").spawn().expect("Couldn't start daemon.");
@@ -378,6 +392,7 @@ fn run_theme(new_theme: Theme) {
             "xres" => new_theme.load_xres(false),
             "xres_m" => new_theme.load_xres(true),
             "wall" => new_theme.load_wall(),
+            "ncmpcpp" => new_theme.load_ncm(),
             "termite" => new_theme.load_termite(),
             "|" => {}
             _ => println!("Unknown option"),
@@ -396,9 +411,6 @@ fn run_theme(new_theme: Theme) {
 }
 fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'static str> {
     //Load in data for and run loading methods for a specific theme
-    /*if wm == String::from("i3") {
-      println!("Using i3");
-      }*/
     let mut new_theme: Theme = Theme {
         wm: String::from("i3"),
         monitor: 1,
@@ -484,6 +496,7 @@ fn print_help() {
     println!("delete [theme] : delete a theme");
     println!("refresh : load last loaded theme");
     println!("edit [theme] : initialize editing [theme]");
+    println!("modify [option] : open the currently edited themes's [option] in $EDITOR");
     println!("add [option] [file] : add option to current theme");
     println!("rm [option] : remove option from current theme");
     println!("cycle {{check|start|stop}} : manage theme cycling daemon");
