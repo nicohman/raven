@@ -21,7 +21,7 @@ impl Theme {
         }
     }
     fn load_ncm(&self) {
-            fs::copy(
+        fs::copy(
             get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
             get_home() + "/.ncmpcpp/config",
             ).expect("Couldn't overwrite ncmpcpp config");
@@ -67,7 +67,7 @@ impl Theme {
     fn load_poly(&self, monitor: i32) {
         let order: Vec<&str> = vec!["main", "other"];
         for number in 0..monitor {
-            let out = Command::new("sh")
+            Command::new("sh")
                 .arg("-c")
                 .arg(
                     String::from("polybar --config=") + &get_home() +
@@ -76,7 +76,6 @@ impl Theme {
                     )
                 .spawn()
                 .expect("Failed to run polybar");
-            //println!("{:?}", out);
         }
     }
     fn load_wall(&self) {
@@ -182,11 +181,11 @@ fn stop_daemon() {
 }
 fn check_daemon() -> bool {
     let out = Command::new("ps").arg("aux").output().expect("Couldn't find daemon");
-    let mut formOut =  String::from_utf8_lossy(&out.stdout);
-    let lineNum = formOut.lines().filter(|x| {
+    let  form_out =  String::from_utf8_lossy(&out.stdout);
+    let line_num = form_out.lines().filter(|x| {
         x.contains("ravend")
     }).count();
-    if lineNum > 0 {
+    if line_num > 0 {
         true
     } else {
         false
@@ -241,12 +240,17 @@ fn show_menu(menu_command: String, wm: String, monitor: i32) {
             )
         .output()
         .expect("Failed to run menu.");
-    clear_prev();
-    let theme = load_theme(&String::from_utf8_lossy(&output.stdout).trim(), wm, monitor);
-    if theme.is_err() {
-        println!("Could not load in theme data. Does it exist?");
-    }   else {
-        run_theme(theme.unwrap());
+    let int_output = String::from_utf8_lossy(&output.stdout);
+    if int_output.len() > 0 {
+        clear_prev();
+        let theme = load_theme(int_output.trim(), wm, monitor);
+        if theme.is_err() {
+            println!("Could not load in theme data. Does it exist?");
+        }   else {
+            run_theme(theme.unwrap());
+        }
+    } else {
+        println!("Theme not selected.");
     }
 
 }
