@@ -14,6 +14,27 @@ struct Theme {
     monitor: i32,
 }
 impl Theme {
+    fn load_all(&self) {
+        for option in &self.options {
+            match option.to_lowercase().as_ref() {
+                "poly" => self.load_poly(self.monitor),
+                "wm" => self.load_wm(),
+                "xres" => self.load_xres(false),
+                "xres_m" => self.load_xres(true),
+                "wall" => self.load_wall(),
+                "ncmpcpp" => self.load_ncm(),
+                "termite" => self.load_termite(),
+                "|" => {}
+                _ => println!("Unknown option"),
+            };
+            if !option.contains("|") {
+                println!("Loaded option {}", option);
+            }
+
+        }
+        println!("Loaded all options for theme {}", self.name);
+
+    }
     fn load_wm(&self) {
         match self.wm.as_ref() {
             "i3" => self.load_i3(),
@@ -72,7 +93,7 @@ impl Theme {
                 .arg(
                     String::from("polybar --config=") + &get_home() +
                     "/.config/raven/themes/" + &self.name + "/poly " +
-                    order[number as usize] + " > /dev/null",
+                    order[number as usize] + " > /dev/null 2> /dev/null",
                     )
                 .spawn()
                 .expect("Failed to run polybar");
@@ -295,10 +316,6 @@ fn new_theme(theme_name: &str) {
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if res.is_ok() {
         res.unwrap();
-        println!(
-            "{}",
-            get_home() + "/.config/raven/themes/" + &theme_name + "/theme"
-            );
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
@@ -389,20 +406,7 @@ fn rm_from_theme(theme_name: &str, option: &str, wm: String, monitor: i32) {
 }
 fn run_theme(new_theme: Theme) {
     //Run/refresh a loaded Theme
-    for option in &new_theme.options {
-        match option.to_lowercase().as_ref() {
-            "poly" => new_theme.load_poly(new_theme.monitor),
-            "wm" => new_theme.load_wm(),
-            "xres" => new_theme.load_xres(false),
-            "xres_m" => new_theme.load_xres(true),
-            "wall" => new_theme.load_wall(),
-            "ncmpcpp" => new_theme.load_ncm(),
-            "termite" => new_theme.load_termite(),
-            "|" => {}
-            _ => println!("Unknown option"),
-        };
-
-    }
+    new_theme.load_all();
     fs::remove_file(get_home()+"/.config/raven/last").unwrap();
     OpenOptions::new()
         .create(true)
@@ -426,7 +430,6 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
         let entries = ent_res.unwrap();
         for entry in entries {
             let entry = proc_path(entry.unwrap());
-            //println!("{}",entry);
             if String::from(entry).trim() == String::from("theme") {
                 println!("Found theme {}", theme_name);
                 let mut theme = String::new();
@@ -440,7 +443,6 @@ fn load_theme(theme_name: &str, wm: String, monitor: i32) -> Result<Theme, &'sta
                     .map(|x| String::from(String::from(x).trim()))
                     .filter(|x| x.len() > 0)
                     .collect::<Vec<String>>();
-                //println!("{}", options.len());
                 new_theme = Theme {
                     wm: String::from(wm.as_ref()),
                     name: String::from(theme_name),

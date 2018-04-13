@@ -15,13 +15,11 @@ fn main () {
         let mut time = String::new();
         fs::File::open(get_home()+"/.config/raven/time").unwrap().read_to_string(&mut time).unwrap();
         time = String::from(time.trim());
-        let timeR = time.parse::<i32>();
-        if timeR.is_ok() {
-            let mut timeT = timeR.unwrap();
-            println!("{}", timeT);
-            let mut themes = fs::read_dir(get_home()+"/.config/raven/themes").expect("Couldn't read themes").collect::<Vec<io::Result<DirEntry>>>().into_iter().map(|x| proc_path(x.unwrap())).collect::<Vec<String>>();
-            let mut ind = 0;
-            start_cycle(themes, timeT);
+        let time_r = time.parse::<i32>();
+        if time_r.is_ok() {
+            let time_t = time_r.unwrap();
+            let themes = fs::read_dir(get_home()+"/.config/raven/themes").expect("Couldn't read themes").collect::<Vec<io::Result<DirEntry>>>().into_iter().map(|x| proc_path(x.unwrap())).collect::<Vec<String>>();
+            start_cycle(themes, time_t);
         } else {
             println!("Time file does not contain a number in seconds. {}", time);
         }
@@ -33,7 +31,7 @@ fn get_home() -> String {
 fn start_cycle(entries : Vec<String> , time: i32) {
     let mut index = 0;
     loop {
-    let mut len  = entries.len();
+    let len  = entries.len();
     if index >= len {
         index = 0;
     }
