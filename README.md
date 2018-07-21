@@ -21,6 +21,8 @@ The following packages are required for their relevant options:
 
 + [i3](https://github.com/i3/i3): `wm`
 
+You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
+
 ## Usage
 `raven help` for a list of available commands:
 ```Commands:
