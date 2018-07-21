@@ -21,6 +21,8 @@ The following packages are required for their relevant options:
 
 + [i3](https://github.com/i3/i3): `wm`
 
+You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
+
 ## Usage
 `raven help` for a list of available commands:
 ```Commands:
@@ -35,7 +37,7 @@ rm [option] : remove option from current theme
 menu : show theme menu
 ```
 ## Configuration
-A main config file is place in ~/.config/raven/config, which has two options:
+A main config file is placed in ~/.config/raven/config, which has two options:
 ```
 window_manager: |[window manager in use. Currently only i3 is supported.]|
 monitor : |number of monitors available, to tell how many polybars to dupe.|
@@ -53,3 +55,5 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 If you place an i3 config named base\_i3 in ~/.config/raven, the contents of wm for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme.
 This will copy the indicated file to raven's registry, and run/reload/copy it when the edited theme is loaded or refreshed. Run `raven rm [option]` to remove an option from a theme.
 
+### Polybar bar names
+Up to two polybars will be started, depending on how many monitors you have configured. The bars should be named, in order: `main` and `other`  
