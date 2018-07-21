@@ -24,7 +24,8 @@ impl Theme {
                 "wall" => self.load_wall(),
                 "ncmpcpp" => self.load_ncm(),
                 "termite" => self.load_termite(),
-                "|" => {}
+                "ranger" => self.load_ranger(),
+                "|" => {},
                 _ => println!("Unknown option"),
             };
             if !option.contains("|") {
@@ -34,6 +35,9 @@ impl Theme {
         }
         println!("Loaded all options for theme {}", self.name);
 
+    }
+    fn load_ranger(&self) {
+        fs::copy(get_home()+"/.config/raven/themes/"+&self.name+"/ranger",get_home()+"/.config/ranger/rc.conf").expect("Couldn't overwrite ranger config");
     }
     fn load_wm(&self) {
         match self.wm.as_ref() {
