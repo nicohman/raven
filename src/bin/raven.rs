@@ -25,6 +25,7 @@ impl Theme {
                 "ncmpcpp" => self.load_ncm(),
                 "termite" => self.load_termite(),
                 "ranger" => self.load_ranger(),
+                "lemonbar" => self.load_lemon(),
                 "|" => {},
                 _ => println!("Unknown option"),
             };
@@ -103,6 +104,9 @@ impl Theme {
                 .expect("Failed to run polybar");
         }
     }
+    fn load_lemon(&self) {
+        Command::new("sh").arg(get_home()+"/.config/raven/themes/"+&self.name+"/lemonbar").spawn().expect("Failed to run lemonbar script");
+    }
     fn load_wall(&self) {
         Command::new("feh")
             .arg("--bg-scale")
@@ -146,13 +150,14 @@ fn interpet_args() {
                 let monitor = conf.1;
                 let menu_command = conf.2;
                 let cmd = command.as_ref();
-                //If a theme may be changing, kill the previous theme's processes. Currently only polybar
                 if args.len() > 1 {
                     if !check_args_cmd(args.len() -2 , cmd) {
                         println!("Not enough arguments for {}", &cmd);
                         ::std::process::exit(64);
                     }
                 }
+
+                //If a theme may be changing, kill the previous theme's processes. Currently only polybar
                 if cmd == "load" || cmd == "refresh" {
                     clear_prev();
                 }
@@ -297,6 +302,7 @@ fn edit(theme_name: &str) {
 }
 fn clear_prev() {
     Command::new("pkill").arg("polybar").spawn().unwrap();
+    Command::new("pkill").arg("lemonbar").spawn().unwrap();
 }
 fn del_theme(theme_name: &str) {
     fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
