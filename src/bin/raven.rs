@@ -198,7 +198,9 @@ fn check_args_cmd(num:usize, command:&str) -> bool{
 fn modify_file(file: &str){
     let editing = get_editing();
     let editor = env::var_os("EDITOR").expect("Could not fetch $EDITOR from OS");
-    Command::new(editor).arg(get_home()+"/.config/raven/themes/"+&editing+"/"+file).spawn().expect("Couldn't run $EDITOR");
+    let path = get_home()+"/.config/raven/themes/"+&editing+"/"+file;
+    println!("{}",path);
+    Command::new(editor).arg(path).spawn().expect("Couldn't run $EDITOR");
 }
 fn start_daemon() {
     Command::new("sh").arg("-c").arg("ravend").spawn().expect("Couldn't start daemon.");
