@@ -169,6 +169,7 @@ fn interpet_args() {
                     "delete" => del_theme(&args[2]),
                     "edit" => edit(&args[2]),
                     "cycle" => manage_daemon(&args[2]),
+                    "info" => print_info(),
                     "refresh" => refresh_theme(wm, monitor),
                     "add" => add_to_theme(&get_editing(), &args[2], &args[3], wm, monitor),
                     "rm" => rm_from_theme(&get_editing(), &args[2], wm, monitor),
@@ -177,6 +178,19 @@ fn interpet_args() {
                 }
 
             }
+}
+fn print_info() {
+    let editing = get_editing();
+    let options = fs::read_dir(get_home() + "/.config/raven/themes/"+&editing)
+        .expect("Couldn't read themes")
+        .collect::<Vec<io::Result<DirEntry>>>()
+        .into_iter()
+        .map(|x| proc_path(x.unwrap()))
+        .collect::<Vec<String>>();
+    println!("Current configured options for {}",editing);
+    for option in options {
+        println!("{}",option);
+    }
 }
 fn check_args_cmd(num:usize, command:&str) -> bool{
     let need = match command {
