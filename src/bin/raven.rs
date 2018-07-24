@@ -532,6 +532,7 @@ fn print_help() {
     println!("add [option] [file] : add option to current theme");
     println!("rm [option] : remove option from current theme");
     println!("cycle {{check|start|stop}} : manage theme cycling daemon");
+    println!("info : print info about the theme being currently edited");
     println!("menu : show theme menu");
 }
 fn get_home() -> String {
