@@ -10,7 +10,7 @@ use std::thread;
 use std::process::Command;
 fn main () {
     if fs::metadata(get_home()+"/.config/raven/time").is_err() {
-        println!("There is no time configured for ravend.");
+        println!("There is no time configured for ravend. Edit ~/.config/raven/time with a number of seconds.");
     } else {
         let mut time = String::new();
         fs::File::open(get_home()+"/.config/raven/time").unwrap().read_to_string(&mut time).unwrap();

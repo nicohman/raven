@@ -10,3 +10,6 @@ categories=["gui","command-line-interface"]
 license="GPL-3.0"
 [dependencies]
 time = "0.1"
+serde = "1.0.70"
+serde_derive = "1.0"
+serde_json = "1.0"
