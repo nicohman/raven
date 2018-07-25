@@ -1,6 +1,5 @@
 use std::fs;
-use std::fs::DirEntry;
-use std::fs::OpenOptions;
+use std::fs::{File, OpenOptions, DirEntry};
 use std::io::Read;
 use std::env;
 use std::io::Write;
@@ -10,6 +9,8 @@ use std::io;
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
+extern crate tar;
+use tar::Builder;
 //Structure that holds all methods and data for individual themes.
 struct Theme {
     name: String,
@@ -229,6 +230,7 @@ fn interpet_args() {
             "edit" => edit(&args[2]),
             "cycle" => manage_daemon(&args[2]),
             "info" => print_info(conf.editing),
+            "export" => export(&args[2]),
             "refresh" => refresh_theme(conf.last),
             "add" => add_to_theme(&conf.editing, &args[2], &args[3]),
             "rm" => rm_from_theme(&conf.editing, &args[2]),
@@ -407,6 +409,16 @@ fn new_theme(theme_name: &str) {
         edit(&theme_name);
     } else {
         println!("Theme {} already exists", &theme_name);
+    }
+}
+fn export(theme_name:&str) {
+    if fs::metadata(get_home()+"/.config/raven/themes/"+theme_name).is_ok() {
+        let tb = File::create(theme_name.to_string()+".tar").unwrap();
+        let mut b = Builder::new(tb);
+        b.append_dir_all(theme_name.to_string(), get_home()+"/.config/raven/themes/"+theme_name);
+        b.into_inner().expect("Couldn't write tar archive");
+    } else {
+        println!("Theme does not exist");
     }
 }
 fn add_to_theme(theme_name: &str, option: &str, path: &str) {
