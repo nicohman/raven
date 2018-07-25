@@ -22,7 +22,7 @@ The following packages are required for their relevant options:
 
 + [Termite](https://github.com/thestinger/termite/): `termite`
 
-+ [i3](https://github.com/i3/i3): `wm`
++ [i3](https://github.com/i3/i3): `i3`
 
 + [Ranger](https://github.com/ranger/ranger) : `ranger`
 
