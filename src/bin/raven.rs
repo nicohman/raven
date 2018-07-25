@@ -10,7 +10,7 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 extern crate tar;
-use tar::Builder;
+use tar::{Archive, Builder};
 //Structure that holds all methods and data for individual themes.
 struct Theme {
     name: String,
@@ -77,7 +77,8 @@ impl Theme {
         fs::File::open(
             get_home() + "/.config/raven/themes/" + &self.name + "/openbox",
         ).unwrap()
-            .read_to_string(&mut rest).unwrap();
+            .read_to_string(&mut rest)
+            .unwrap();
         base.push_str(&rest);
         fs::remove_file(get_home() + "/.config/openbox/rc.xml").unwrap();
         OpenOptions::new()
@@ -231,6 +232,7 @@ fn interpet_args() {
             "cycle" => manage_daemon(&args[2]),
             "info" => print_info(conf.editing),
             "export" => export(&args[2]),
+            "import" => import(&args[2]),
             "refresh" => refresh_theme(conf.last),
             "add" => add_to_theme(&conf.editing, &args[2], &args[3]),
             "rm" => rm_from_theme(&conf.editing, &args[2]),
@@ -260,6 +262,8 @@ fn check_args_cmd(num: usize, command: &str) -> bool {
         "modify" => 1,
         "edit" => 1,
         "add" => 2,
+        "import" => 1,
+        "export" => 1,
         "delete" => 1,
         _ => 0,
     };
@@ -334,9 +338,15 @@ fn show_menu(menu_command: String) {
         .map(|x| proc_path(x.unwrap()))
         .collect::<Vec<String>>();
     entries.sort_by(|a, b| a.cmp(&b));
+    let mut i = 0;
     for entry in entries {
-        theme_list.push_str(&entry);
-        theme_list.push_str("\n");
+        if entry.chars().count() > 0 {
+            if i > 0 {
+                theme_list.push_str("\n");
+            }
+            theme_list.push_str(&entry);
+            i += 1;
+        }
     }
     let output = Command::new("sh")
         .arg("-c")
@@ -411,14 +421,27 @@ fn new_theme(theme_name: &str) {
         println!("Theme {} already exists", &theme_name);
     }
 }
-fn export(theme_name:&str) {
-    if fs::metadata(get_home()+"/.config/raven/themes/"+theme_name).is_ok() {
-        let tb = File::create(theme_name.to_string()+".tar").unwrap();
+fn export(theme_name: &str) {
+    if fs::metadata(get_home() + "/.config/raven/themes/" + theme_name).is_ok() {
+        let tb = File::create(theme_name.to_string() + ".tar").unwrap();
         let mut b = Builder::new(tb);
-        b.append_dir_all(theme_name.to_string(), get_home()+"/.config/raven/themes/"+theme_name);
+        b.append_dir_all(
+            theme_name.to_string(),
+            get_home() + "/.config/raven/themes/" + theme_name,
+        ).expect("Couldn't add theme to archive");
         b.into_inner().expect("Couldn't write tar archive");
+        println!("Wrote theme to {}.tar", theme_name)
     } else {
         println!("Theme does not exist");
+    }
+}
+fn import(file_name: &str) {
+    if fs::metadata(file_name).is_ok() {
+        let mut arch = Archive::new(File::open(file_name).unwrap());
+        arch.unpack(get_home() + "/.config/raven/themes/").expect(
+            "Couldn't unpack theme archive",
+        );
+        println!("Imported theme.");
     }
 }
 fn add_to_theme(theme_name: &str, option: &str, path: &str) {
@@ -585,6 +608,8 @@ fn print_help() {
     println!("edit [theme] : initialize editing [theme]");
     println!("modify [option] : open the currently edited themes's [option] in $EDITOR");
     println!("add [option] [file] : add option to current theme");
+    println!("import [archive] : import an exported theme");
+    println!("export [theme] : export target theme to a tarball");
     println!("rm [option] : remove option from current theme");
     println!("cycle {{check|start|stop}} : manage theme cycling daemon");
     println!("info : print info about the theme being currently edited");
