@@ -10,14 +10,14 @@ use std::io;
 extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
-#[derive(Serialize, Deserialize, Debug)]
 //Structure that holds all methods and data for individual themes.
 struct Theme {
     name: String,
     options: Vec<String>,
     monitor: i32,
-    order:Vec<String>
+    order: Vec<String>,
 }
+//Config structure for holding all main config options
 #[derive(Serialize, Deserialize, Debug)]
 struct Config {
     monitors: i32,
@@ -51,6 +51,7 @@ impl Theme {
                 "termite" => self.load_termite(),
                 "ranger" => self.load_ranger(),
                 "lemonbar" => self.load_lemon(),
+                "openbox" => self.load_openbox(),
                 "|" => {}
                 _ => println!("Unknown option"),
             };
@@ -61,6 +62,34 @@ impl Theme {
         }
         println!("Loaded all options for theme {}", self.name);
 
+    }
+    fn load_openbox(&self) {
+        let mut base = String::new();
+        if fs::metadata(get_home() + "/.config/raven/base_rc.xml").is_ok() {
+            fs::File::open(get_home() + "/.config/raven/base_rc.xml")
+                .unwrap()
+                .read_to_string(&mut base)
+                .unwrap();
+
+        }
+        let mut rest = String::new();
+        fs::File::open(
+            get_home() + "/.config/raven/themes/" + &self.name + "/openbox",
+        ).unwrap()
+            .read_to_string(&mut rest).unwrap();
+        base.push_str(&rest);
+        fs::remove_file(get_home() + "/.config/openbox/rc.xml").unwrap();
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(get_home() + "/.config/openbox/rc.xml")
+            .expect("Couldn't open rc.xml")
+            .write_all(base.as_bytes())
+            .unwrap();
+        Command::new("openbox")
+            .arg("--reconfigure")
+            .spawn()
+            .expect("Couldn't reload openbox");
     }
     fn load_ranger(&self) {
         fs::copy(
@@ -84,7 +113,7 @@ impl Theme {
                 .unwrap();
         }
         let mut app = String::new();
-        if (isw) {
+        if isw {
             fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/wm")
                 .unwrap()
                 .read_to_string(&mut app)
@@ -203,7 +232,7 @@ fn interpet_args() {
             "refresh" => refresh_theme(conf.last),
             "add" => add_to_theme(&conf.editing, &args[2], &args[3]),
             "rm" => rm_from_theme(&conf.editing, &args[2]),
-            "menu" => show_menu(conf.menu_command, conf.monitors),
+            "menu" => show_menu(conf.menu_command),
             _ => println!("Unknown command. raven help for commands."),
         }
 
@@ -294,7 +323,7 @@ fn manage_daemon(command: &str) {
         }
     }
 }
-fn show_menu(menu_command: String, monitor: i32) {
+fn show_menu(menu_command: String) {
     let mut theme_list = String::new();
     let mut entries = fs::read_dir(get_home() + "/.config/raven/themes")
         .expect("Couldn't read themes")
@@ -353,12 +382,12 @@ fn del_theme(theme_name: &str) {
     fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
         .expect("Couldn't delete theme");;
 }
-fn refresh_theme( last:String) {
+fn refresh_theme(last: String) {
     //Load last loaded theme
-    if(last.chars().count() > 0){
-    run_theme(load_theme(last.trim()).unwrap()); 
+    if last.chars().count() > 0 {
+        run_theme(load_theme(last.trim()).unwrap());
     } else {
-    
+
         println!("No last theme saved. Cannot refresh.");
     }
 }
@@ -467,7 +496,7 @@ fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
         monitor: 1,
         options: vec![String::from("no")],
         name: String::from("no"),
-        order:conf.polybar.clone()
+        order: conf.polybar.clone(),
     };
     let ent_res = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if ent_res.is_ok() {
@@ -491,7 +520,7 @@ fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
                     name: String::from(theme_name),
                     options: options,
                     monitor: conf.monitors,
-                    order:conf.polybar.clone()
+                    order: conf.polybar.clone(),
                 };
             }
         }
@@ -507,8 +536,14 @@ fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
 }
 fn init() {
     //Create base raven directories and config file(s)
-    fs::create_dir(get_home() + "/.config/raven").unwrap();
-    fs::create_dir(get_home() + "/.config/raven/themes").unwrap();
+    if fs::metadata(get_home() + "/.config/raven/config").is_err() {
+        fs::create_dir(get_home() + "/.config/raven").unwrap();
+        fs::create_dir(get_home() + "/.config/raven/themes").unwrap();
+    } else {
+        println!(
+            "The config file format has changed. Please check ~/.config/raven/config.json to reconfigure raven."
+        );
+    }
     let mut file = OpenOptions::new()
         .create(true)
         .write(true)
