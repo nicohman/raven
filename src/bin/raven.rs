@@ -11,11 +11,19 @@ extern crate serde;
 extern crate serde_json;
 extern crate tar;
 use tar::{Archive, Builder};
+//Structure that holds theme data, to be stored in a theme folder.
+#[derive(Serialize, Deserialize, Debug)]
+struct ThemeStore {
+    name: String,
+    options: Vec<String>,
+    enabled: Vec<String>,
+}
 //Structure that holds all methods and data for individual themes.
 struct Theme {
     name: String,
     options: Vec<String>,
     monitor: i32,
+    enabled: Vec<String>,
     order: Vec<String>,
 }
 //Config structure for holding all main config options
@@ -192,6 +200,8 @@ impl Theme {
     }
 }
 fn main() {
+
+    check_themes();
     interpet_args();
 }
 fn interpet_args() {
@@ -219,6 +229,7 @@ fn interpet_args() {
         }
 
         //If a theme may be changing, kill the previous theme's processes. Currently only polybar
+        //and lemonbar
         if cmd == "load" || cmd == "refresh" {
             clear_prev();
         }
@@ -374,13 +385,7 @@ fn edit(theme_name: &str) {
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
         let mut conf = get_config();
         conf.editing = theme_name.to_string();
-        OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(get_home() + "/.config/raven/config.json")
-            .expect("Can't open editing log")
-            .write_all(serde_json::to_string(&conf).unwrap().as_bytes())
-            .unwrap();
+        up_config(conf);
         println!("You are now editing the theme {}", &theme_name);
     } else {
         println!("That theme does not exist");
@@ -515,59 +520,94 @@ fn run_theme(new_theme: Theme) {
     new_theme.load_all();
     let mut conf = get_config();
     conf.last = new_theme.name;
-    OpenOptions::new()
+    up_config(conf);
+}
+fn up_config(conf: Config) {
+        OpenOptions::new()
         .create(true)
         .write(true)
-        .open(get_home() + "/.config/raven/config.json")
+        .open(get_home() + "/.config/raven/~config.json")
         .expect("Couldn't open last theme file")
         .write_all(serde_json::to_string(&conf).unwrap().as_bytes())
         .expect("Couldn't write to last theme file");
-
+    fs::copy(get_home()+"/.config/raven/~config.json", get_home()+"/.config/raven/config.json").unwrap();
+    fs::remove_file(get_home()+"/.config/raven/~config.json").unwrap();
+}
+fn convert_theme(theme_name: &str) {
+    let mut theme = String::new();
+    fs::File::open(
+        get_home() + "/.config/raven/themes/" + theme_name + "/theme",
+    ).expect("Couldn't read theme")
+        .read_to_string(&mut theme)
+        .unwrap();
+    let options = theme
+        .split('|')
+        .map(|x| String::from(String::from(x).trim()))
+        .filter(|x| x.len() > 0)
+        .filter(|x| x != "|")
+        .collect::<Vec<String>>();
+    let mut themes = ThemeStore {
+        name: theme_name.to_string(),
+        enabled: Vec::new(),
+        options: options,
+    };
+    fs::remove_file(
+        get_home() + "/.config/raven/themes/" + theme_name + "/theme",
+    ).unwrap();
+    OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(
+            get_home() + "/.config/raven/themes/" + theme_name + "/theme.json",
+        )
+        .expect("Can't open theme.json")
+        .write_all(serde_json::to_string(&themes).unwrap().as_bytes())
+        .unwrap();
+}
+fn check_themes() {
+    let entries = fs::read_dir(get_home() + "/.config/raven/themes").unwrap();
+    for entry in entries {
+        let entry = proc_path(entry.unwrap());
+        if fs::metadata(get_home() + "/.config/raven/themes/" + &entry + "/theme").is_ok() {
+            convert_theme(&entry);
+        }
+    }
 }
 fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
     //Load in data for and run loading methods for a specific theme
     let conf = get_config();
-    let mut new_theme: Theme = Theme {
-        monitor: 1,
-        options: vec![String::from("no")],
-        name: String::from("no"),
-        order: conf.polybar.clone(),
-    };
     let ent_res = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if ent_res.is_ok() {
-        let entries = ent_res.unwrap();
-        for entry in entries {
-            let entry = proc_path(entry.unwrap());
-            if String::from(entry).trim() == String::from("theme") {
-                println!("Found theme {}", theme_name);
-                let mut theme = String::new();
-                fs::File::open(
-                    get_home() + "/.config/raven/themes/" + theme_name + "/theme",
-                ).expect("Couldn't read theme")
-                    .read_to_string(&mut theme)
-                    .unwrap();
-                let options = theme
-                    .split('|')
-                    .map(|x| String::from(String::from(x).trim()))
-                    .filter(|x| x.len() > 0)
-                    .collect::<Vec<String>>();
-                new_theme = Theme {
-                    name: String::from(theme_name),
-                    options: options,
-                    monitor: conf.monitors,
-                    order: conf.polybar.clone(),
-                };
-            }
+        println!("Found theme {}", theme_name);
+        if fs::metadata(
+            get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json",
+        ).is_ok()
+        {
+            let mut theme = String::new();
+            fs::File::open(
+                get_home() + "/.config/raven/themes/" + theme_name + "/theme.json",
+            ).expect("Couldn't read theme")
+                .read_to_string(&mut theme)
+                .unwrap();
+            let theme_info: ThemeStore = serde_json::from_str(&theme).unwrap();
+            let opts: Vec<String> = theme_info.options;
+            let new_theme = Theme {
+                name: String::from(theme_name),
+                options: opts,
+                monitor: conf.monitors,
+                enabled: theme_info.enabled,
+                order: conf.polybar.clone(),
+            };
+            Ok(new_theme)
+        } else {
+
+            Err("Can't find Theme data")
         }
     } else {
         println!("Theme does not exist.");
         ::std::process::exit(64);
     }
-    if new_theme.name != String::from("no") {
-        Ok(new_theme)
-    } else {
-        Err("Can't find Theme data")
-    }
+
 }
 fn init() {
     //Create base raven directories and config file(s)
