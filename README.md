@@ -32,6 +32,8 @@ The following packages are required for their relevant options:
 
 + [Openbox](https://github.com/danakj/openbox) : `openbox`
 
++ [Pywal](https://github.com/dylanaraps/pywal) : `pywal`
+
 + [Rofi](https://github.com/DaveDavenport/rofi) is used in the default config and is recommended.
 
 
@@ -79,6 +81,7 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 + lemonbar(A shell script that should spawn your lemonbar)
 + ncmpcpp(ncmpcpp config file)
 + Openbox(rc.xml)
++ Pywal(an image file that will be used as the pywal base)
 
 If you place an i3 config named base\_i3 in ~/.config/raven, the contents of i3 for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme. This also applies for a file named base\_rc.xml, for openbox.
 

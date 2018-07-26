@@ -55,6 +55,7 @@ impl Theme {
                 "i3" => self.load_i3(false),
                 "xres" => self.load_xres(false),
                 "xres_m" => self.load_xres(true),
+                "pywal" => self.load_pywal(),
                 "wall" => self.load_wall(),
                 "ncmpcpp" => self.load_ncm(),
                 "termite" => self.load_termite(),
@@ -71,6 +72,10 @@ impl Theme {
         }
         println!("Loaded all options for theme {}", self.name);
 
+    }
+    fn load_pywal(&self){
+        let arg = get_home()+"/.config/raven/themes/"+&self.name+"/pywal";
+        Command::new("wal").arg("-n").arg("-i").arg(arg).output().expect("Couldn't run pywal");
     }
     fn load_openbox(&self) {
         let mut base = String::new();
@@ -98,7 +103,7 @@ impl Theme {
             .unwrap();
         Command::new("openbox")
             .arg("--reconfigure")
-            .spawn()
+            .output()
             .expect("Couldn't reload openbox");
     }
     fn load_ranger(&self) {
@@ -143,7 +148,7 @@ impl Theme {
             .expect("Couldn't open i3 file")
             .write_all(config.as_bytes())
             .unwrap();
-        Command::new("i3-msg").arg("reload").spawn().expect(
+        Command::new("i3-msg").arg("reload").output().expect(
             "Couldn't reload i3",
         );
     }
@@ -155,7 +160,7 @@ impl Theme {
         Command::new("pkill")
             .arg("-SIGUSR1")
             .arg("termite")
-            .spawn()
+            .output()
             .expect("Couldn't reload termite");
     }
     fn load_poly(&self, monitor: i32) {
@@ -183,7 +188,7 @@ impl Theme {
         Command::new("feh")
             .arg("--bg-scale")
             .arg(get_home() + "/.config/raven/themes/" + &self.name + "/wall")
-            .spawn()
+            .output()
             .expect("Failed to change wallpaper");
     }
     fn load_xres(&self, merge: bool) {
@@ -195,7 +200,7 @@ impl Theme {
         }
         xres.arg(
             get_home() + "/.config/raven/themes/" + &self.name + "/" + &name,
-        ).spawn()
+        ).output()
             .expect("Could not run xrdb");
     }
 }
@@ -283,7 +288,7 @@ fn check_args_cmd(num: usize, command: &str) -> bool {
 fn modify_file(editing: String, file: &str) {
     let editor = env::var_os("EDITOR").expect("Could not fetch $EDITOR from OS");
     let path = get_home() + "/.config/raven/themes/" + &editing + "/" + file;
-    println!("{}", path);
+    println!("Started {:?} at {}", editor, path);
     Command::new(editor).arg(path).spawn().expect(
         "Couldn't run $EDITOR",
     );
@@ -392,8 +397,8 @@ fn edit(theme_name: &str) {
     }
 }
 fn clear_prev() {
-    Command::new("pkill").arg("polybar").spawn().unwrap();
-    Command::new("pkill").arg("lemonbar").spawn().unwrap();
+    Command::new("pkill").arg("polybar").output().unwrap();
+    Command::new("pkill").arg("lemonbar").output().unwrap();
 }
 fn del_theme(theme_name: &str) {
     fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
@@ -452,34 +457,21 @@ fn import(file_name: &str) {
 fn add_to_theme(theme_name: &str, option: &str, path: &str) {
     //Add an option to a theme
     let mut cur_theme = load_theme(theme_name).unwrap();
-    let mut already_used = -1;
-    cur_theme.options = cur_theme
-        .options
-        .iter()
-        .map(|x| if x != option {
-            x.to_owned()
-        } else {
-            already_used = 1;
-            x.to_owned()
-        })
-        .collect::<Vec<String>>();
-    if already_used == -1 {
-        &cur_theme.options.push(String::from(option));
-        let mut newop = cur_theme
-            .options
-            .iter()
-            .filter(|x| x.len() > 0)
-            .map(|x| String::from("|") + &x)
-            .collect::<String>();
-        newop.push('|');
-        let mut file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(
-                get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
-            )
-            .expect("can open");
-        file.write_all(newop.as_bytes()).unwrap();
+    let mut new_themes = ThemeStore {
+        name:theme_name.to_string(),
+        options:cur_theme.options,
+        enabled:cur_theme.enabled
+    };
+    let mut already_used = false;
+    for opt in &new_themes.options {
+        if opt == option {
+            already_used = true;
+        }
+    }
+    if !already_used 
+    {
+        new_themes.options.push(String::from(option));
+        up_theme(new_themes);
     }
     let mut totpath = env::current_dir().unwrap();
     totpath.push(path);
@@ -487,33 +479,31 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str) {
         totpath,
         get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
     ).expect("Couldn't copy config in");
+    
 }
 fn rm_from_theme(theme_name: &str, option: &str) {
     //Remove an option from a theme
     let cur_theme = load_theme(theme_name).unwrap();
-    let mut newop: String = cur_theme
-        .options
-        .iter()
-        .filter(|x| x.len() > 0)
-        .filter(|x| {
-            let is = String::from(option).find(x.trim());
-            is.is_none()
-        })
-        .map(|x| String::from("|") + &x)
-        .collect::<String>();
-    newop.push('|');
-    let theme_path = get_home() + "/.config/raven/themes/" + &theme_name + "/theme";
-    fs::remove_file(&theme_path).expect("Couldn't reset");
-    OpenOptions::new()
-        .create(true)
-        .write(true)
-        .open(theme_path)
-        .expect("can open")
-        .write(newop.as_bytes())
-        .expect("Couldn't write");
-    fs::remove_file(
-        get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
-    ).expect("Couldn't remove option");
+    let mut new_themes = ThemeStore {
+        name:theme_name.to_string(),
+        options:cur_theme.options,
+        enabled:cur_theme.enabled
+    };
+    let mut found = false;
+    let mut i =0;
+    while i < new_themes.options.len() {
+        if &new_themes.options[i] == option {
+            println!("Found option {}", option);
+            found = true;
+            new_themes.options.remove(i);
+        }
+        i+=1;
+    }
+    if found {
+        up_theme(new_themes);
+    } else {
+        println!("Couldn't find option {}", option);
+    }
 }
 fn run_theme(new_theme: Theme) {
     //Run/refresh a loaded Theme
@@ -533,6 +523,14 @@ fn up_config(conf: Config) {
     fs::copy(get_home()+"/.config/raven/~config.json", get_home()+"/.config/raven/config.json").unwrap();
     fs::remove_file(get_home()+"/.config/raven/~config.json").unwrap();
 }
+fn up_theme(theme: ThemeStore) {
+    let wthemepath = get_home()+"/.config/raven/themes/"+&theme.name+"/~theme.json";
+    let themepath = get_home()+"/.config/raven/themes/"+&theme.name+"/theme.json";
+    OpenOptions::new().create(true).write(true).open(&wthemepath).expect("Couldn't open theme file").write_all(serde_json::to_string(&theme).unwrap().as_bytes()).expect("Couldn't write to theme file");
+    fs::copy(&wthemepath, &themepath).unwrap();
+    fs::remove_file(&wthemepath).unwrap();
+}
+
 fn convert_theme(theme_name: &str) {
     let mut theme = String::new();
     fs::File::open(
