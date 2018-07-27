@@ -2,6 +2,10 @@
 
 A theme manager for linux, currently focusing on i3. Supports multiple different configuration files, and is fast and portable.
 
+### Example
+
+![A gif showing raven working](https://thumbs.gfycat.com/MenacingHandsomeCobra-size_restricted.gif)
+
 ## Installation
 All you technically require is [cargo](https://github.com/rust-lang/cargo) to be installed.
 You can install from [crates.io](https://crates.io/crates/raventhemer) by running `cargo install raventhemer`, or by building manually:
