@@ -59,6 +59,7 @@ impl Theme {
                 "wall" => self.load_wall(),
                 "ncmpcpp" => self.load_ncm(),
                 "termite" => self.load_termite(),
+                "script" => self.load_script(),
                 "ranger" => self.load_ranger(),
                 "lemonbar" => self.load_lemon(),
                 "openbox" => self.load_openbox(),
@@ -76,6 +77,9 @@ impl Theme {
     fn load_pywal(&self){
         let arg = get_home()+"/.config/raven/themes/"+&self.name+"/pywal";
         Command::new("wal").arg("-n").arg("-i").arg(arg).output().expect("Couldn't run pywal");
+    }
+    fn load_script(&self){
+        Command::new(get_home()+"/.config/raven/themes/"+&self.name+"/script").output().expect("Couldn't run custom script");
     }
     fn load_openbox(&self) {
         let mut base = String::new();
@@ -263,7 +267,7 @@ fn print_info(editing: String) {
         .expect("Couldn't read themes")
         .collect::<Vec<io::Result<DirEntry>>>()
         .into_iter()
-        .map(|x| proc_path(x.unwrap()))
+        .map(|x| proc_path(x.unwrap())).filter(|x| x != "theme.json")
         .collect::<Vec<String>>();
     println!("Current configured options for {}", editing);
     for option in options {
@@ -456,7 +460,7 @@ fn import(file_name: &str) {
 }
 fn add_to_theme(theme_name: &str, option: &str, path: &str) {
     //Add an option to a theme
-    let mut cur_theme = load_theme(theme_name).unwrap();
+    let cur_theme = load_theme(theme_name).unwrap();
     let mut new_themes = ThemeStore {
         name:theme_name.to_string(),
         options:cur_theme.options,
@@ -544,7 +548,7 @@ fn convert_theme(theme_name: &str) {
         .filter(|x| x.len() > 0)
         .filter(|x| x != "|")
         .collect::<Vec<String>>();
-    let mut themes = ThemeStore {
+    let themes = ThemeStore {
         name: theme_name.to_string(),
         enabled: Vec::new(),
         options: options,
