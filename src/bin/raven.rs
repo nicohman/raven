@@ -210,7 +210,7 @@ impl Theme {
 }
 fn main() {
 
-    check_themes();
+
     interpet_args();
 }
 fn interpet_args() {
@@ -221,6 +221,7 @@ fn interpet_args() {
     {
         init();
     } else {
+        check_themes();
         let args: Vec<String> = env::args().collect();
         let command: &str;
         if args.len() < 2 {
