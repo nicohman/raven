@@ -60,6 +60,7 @@ impl Theme {
                 "ncmpcpp" => self.load_ncm(),
                 "termite" => self.load_termite(),
                 "script" => self.load_script(),
+                "bspwm" => self.load_bswpm(),
                 "ranger" => self.load_ranger(),
                 "lemonbar" => self.load_lemon(),
                 "openbox" => self.load_openbox(),
@@ -74,12 +75,20 @@ impl Theme {
         println!("Loaded all options for theme {}", self.name);
 
     }
-    fn load_pywal(&self){
-        let arg = get_home()+"/.config/raven/themes/"+&self.name+"/pywal";
-        Command::new("wal").arg("-n").arg("-i").arg(arg).output().expect("Couldn't run pywal");
+    fn load_pywal(&self) {
+        let arg = get_home() + "/.config/raven/themes/" + &self.name + "/pywal";
+        Command::new("wal")
+            .arg("-n")
+            .arg("-i")
+            .arg(arg)
+            .output()
+            .expect("Couldn't run pywal");
     }
-    fn load_script(&self){
-        Command::new(get_home()+"/.config/raven/themes/"+&self.name+"/script").output().expect("Couldn't run custom script");
+    fn load_script(&self) {
+        Command::new(
+            get_home() + "/.config/raven/themes/" + &self.name + "/script",
+        ).output()
+            .expect("Couldn't run custom script");
     }
     fn load_openbox(&self) {
         let mut base = String::new();
@@ -121,6 +130,35 @@ impl Theme {
             get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
             get_home() + "/.ncmpcpp/config",
         ).expect("Couldn't overwrite ncmpcpp config");
+
+    }
+    fn load_bspwm(&self) {
+        let mut config = String::new();
+        if fs::metadata(get_home() + "/.config/raven/base_bspwm").is_ok() {
+            fs::File::open(get_home() + "/.config/raven/base_bspwm")
+                .unwrap()
+                .read_to_string(&mut config)
+                .unwrap();
+        }
+        let mut app = String::new();
+        fs::File::open(
+            get_home() + "/.config/raven/themes/" + &self.name + "/bspwm",
+        ).unwrap()
+            .read_to_string(&mut app)
+            .unwrap();
+
+        config.push_str(&app);
+        fs::remove_file(get_home() + "/.config/bspwm/bspwmrc").unwrap();
+        OpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(get_home() + "/.config/bspwm/bspwmrc")
+            .expect("Couldn't open bspwmrc file")
+            .write_all(config.as_bytes())
+            .unwrap();
+        Command::new("bspc").arg("reload").output().expect(
+            "Couldn't reload bspwm",
+        );
 
     }
     fn load_i3(&self, isw: bool) {
@@ -268,7 +306,8 @@ fn print_info(editing: String) {
         .expect("Couldn't read themes")
         .collect::<Vec<io::Result<DirEntry>>>()
         .into_iter()
-        .map(|x| proc_path(x.unwrap())).filter(|x| x != "theme.json")
+        .map(|x| proc_path(x.unwrap()))
+        .filter(|x| x != "theme.json")
         .collect::<Vec<String>>();
     println!("Current configured options for {}", editing);
     for option in options {
@@ -463,9 +502,9 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str) {
     //Add an option to a theme
     let cur_theme = load_theme(theme_name).unwrap();
     let mut new_themes = ThemeStore {
-        name:theme_name.to_string(),
-        options:cur_theme.options,
-        enabled:cur_theme.enabled
+        name: theme_name.to_string(),
+        options: cur_theme.options,
+        enabled: cur_theme.enabled,
     };
     let mut already_used = false;
     for opt in &new_themes.options {
@@ -473,8 +512,7 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str) {
             already_used = true;
         }
     }
-    if !already_used 
-    {
+    if !already_used {
         new_themes.options.push(String::from(option));
         up_theme(new_themes);
     }
@@ -484,25 +522,25 @@ fn add_to_theme(theme_name: &str, option: &str, path: &str) {
         totpath,
         get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
     ).expect("Couldn't copy config in");
-    
+
 }
 fn rm_from_theme(theme_name: &str, option: &str) {
     //Remove an option from a theme
     let cur_theme = load_theme(theme_name).unwrap();
     let mut new_themes = ThemeStore {
-        name:theme_name.to_string(),
-        options:cur_theme.options,
-        enabled:cur_theme.enabled
+        name: theme_name.to_string(),
+        options: cur_theme.options,
+        enabled: cur_theme.enabled,
     };
     let mut found = false;
-    let mut i =0;
+    let mut i = 0;
     while i < new_themes.options.len() {
         if &new_themes.options[i] == option {
             println!("Found option {}", option);
             found = true;
             new_themes.options.remove(i);
         }
-        i+=1;
+        i += 1;
     }
     if found {
         up_theme(new_themes);
@@ -518,20 +556,29 @@ fn run_theme(new_theme: Theme) {
     up_config(conf);
 }
 fn up_config(conf: Config) {
-        OpenOptions::new()
+    OpenOptions::new()
         .create(true)
         .write(true)
         .open(get_home() + "/.config/raven/~config.json")
         .expect("Couldn't open last theme file")
         .write_all(serde_json::to_string(&conf).unwrap().as_bytes())
         .expect("Couldn't write to last theme file");
-    fs::copy(get_home()+"/.config/raven/~config.json", get_home()+"/.config/raven/config.json").unwrap();
-    fs::remove_file(get_home()+"/.config/raven/~config.json").unwrap();
+    fs::copy(
+        get_home() + "/.config/raven/~config.json",
+        get_home() + "/.config/raven/config.json",
+    ).unwrap();
+    fs::remove_file(get_home() + "/.config/raven/~config.json").unwrap();
 }
 fn up_theme(theme: ThemeStore) {
-    let wthemepath = get_home()+"/.config/raven/themes/"+&theme.name+"/~theme.json";
-    let themepath = get_home()+"/.config/raven/themes/"+&theme.name+"/theme.json";
-    OpenOptions::new().create(true).write(true).open(&wthemepath).expect("Couldn't open theme file").write_all(serde_json::to_string(&theme).unwrap().as_bytes()).expect("Couldn't write to theme file");
+    let wthemepath = get_home() + "/.config/raven/themes/" + &theme.name + "/~theme.json";
+    let themepath = get_home() + "/.config/raven/themes/" + &theme.name + "/theme.json";
+    OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(&wthemepath)
+        .expect("Couldn't open theme file")
+        .write_all(serde_json::to_string(&theme).unwrap().as_bytes())
+        .expect("Couldn't write to theme file");
     fs::copy(&wthemepath, &themepath).unwrap();
     fs::remove_file(&wthemepath).unwrap();
 }

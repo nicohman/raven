@@ -38,6 +38,8 @@ The following packages are required for their relevant options:
 
 + [Pywal](https://github.com/dylanaraps/pywal) : `pywal`
 
++ [Bspwm](https://github.com/baskerville/bspwm) : `bspwm`
+
 + [Rofi](https://github.com/DaveDavenport/rofi) is used in the default config and is recommended.
 
 
