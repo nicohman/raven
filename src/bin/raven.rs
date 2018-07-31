@@ -60,7 +60,7 @@ impl Theme {
                 "ncmpcpp" => self.load_ncm(),
                 "termite" => self.load_termite(),
                 "script" => self.load_script(),
-                "bspwm" => self.load_bswpm(),
+                "bspwm" => self.load_bspwm(),
                 "ranger" => self.load_ranger(),
                 "lemonbar" => self.load_lemon(),
                 "openbox" => self.load_openbox(),
