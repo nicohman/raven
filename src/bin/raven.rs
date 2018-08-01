@@ -316,6 +316,7 @@ fn process_manage_args(args: Vec<String>) {
             "import" => ravens::import(&args[3]),
             "publish" => ravens::upload_theme((&args[3]).to_string()),
             "create" => ravens::create_user((&args[3]).to_string(), (&args[4]).to_string()),
+            "unpublish" => ravens::unpublish_theme((&args[3]).to_string()),
             "login" => ravens::login_user((&args[3]).to_string(), (&args[4]).to_string()),
         _ => println!("Manage requires a subcommand. Run raven help for more info."),
     }
@@ -346,6 +347,7 @@ fn check_args_cmd(num: usize, command: &str) -> bool {
         "import" => 1,
         "create" => 2,
         "login" => 2,
+        "unpublish" => 1,
         "publish" => 1,
         "install" => 1,
         "delete" => 1,
@@ -709,6 +711,7 @@ fn print_help() {
     println!("      - import [archive] : import an exported theme");
     println!("      - export [theme] : export target theme to a tarball");
     println!("      - create [username] [password] : create a new user");
+    println!("      - unpublish [name] : delete a published theme from repo");
     println!("      - login [username] [password] : login to a user profile");
     println!("      - publish [theme] : when logged in, publish a theme online");
 }

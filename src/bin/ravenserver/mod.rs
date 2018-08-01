@@ -140,6 +140,31 @@ pub mod ravens {
             }
         } else {
             println!("That theme does not exist");
+            }
+    }
+    pub fn unpublish_theme(name:String) {
+        let info = load_info().unwrap();
+        let client = reqwest::Client::new();
+        let res = client.post(&("https://demenses.net/themes/delete/".to_string()+&name+"?token="+&info.token)).send();
+        if res.is_ok() {
+            let mut res = res.unwrap();
+            if res.status().is_success() {
+                println!("Successfully unpublished theme");
+            } else {
+                if res.status() == reqwest::StatusCode::NotFound {
+                    println!("Can't unpublish a nonexistent theme");
+                } else if res.status() == reqwest::StatusCode::Forbidden {
+                    println!("Can't unpublish a theme that isn't yours");
+                } else if res.status() == reqwest::StatusCode::Unauthorized {
+                    println!("Did not provide a valid login token");
+                } else {
+                    println!("Server error. Code {:?}", res.status());
+                
+                }
+            }
+        } else {
+            println!("Something went wrong with unpublishing the theme. Error message: ");
+            println!("{:?}", res);
         }
     }
     pub fn download_theme(name: String) {
