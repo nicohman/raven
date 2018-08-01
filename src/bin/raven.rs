@@ -10,7 +10,11 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json;
 extern crate tar;
-use tar::{Archive, Builder};
+extern crate multipart;
+mod ravenserver;
+use ravenserver::ravens;
+extern crate hyper;
+extern crate reqwest;
 //Structure that holds theme data, to be stored in a theme folder.
 #[derive(Serialize, Deserialize, Debug)]
 struct ThemeStore {
@@ -290,8 +294,11 @@ fn interpet_args() {
             "edit" => edit(&args[2]),
             "cycle" => manage_daemon(&args[2]),
             "info" => print_info(conf.editing),
-            "export" => export(&args[2]),
-            "import" => import(&args[2]),
+            "export" => ravens::export(&args[2]),
+            "import" => ravens::import(&args[2]),
+            "publish" => ravens::upload_theme((&args[2]).to_string()),
+            "create" => ravens::create_user((&args[2]).to_string(), (&args[3]).to_string()),
+            "login" => ravens::login_user((&args[2]).to_string(), (&args[3]).to_string()),
             "refresh" => refresh_theme(conf.last),
             "add" => add_to_theme(&conf.editing, &args[2], &args[3]),
             "rm" => rm_from_theme(&conf.editing, &args[2]),
@@ -475,29 +482,7 @@ fn new_theme(theme_name: &str) {
         println!("Theme {} already exists", &theme_name);
     }
 }
-fn export(theme_name: &str) {
-    if fs::metadata(get_home() + "/.config/raven/themes/" + theme_name).is_ok() {
-        let tb = File::create(theme_name.to_string() + ".tar").unwrap();
-        let mut b = Builder::new(tb);
-        b.append_dir_all(
-            theme_name.to_string(),
-            get_home() + "/.config/raven/themes/" + theme_name,
-        ).expect("Couldn't add theme to archive");
-        b.into_inner().expect("Couldn't write tar archive");
-        println!("Wrote theme to {}.tar", theme_name)
-    } else {
-        println!("Theme does not exist");
-    }
-}
-fn import(file_name: &str) {
-    if fs::metadata(file_name).is_ok() {
-        let mut arch = Archive::new(File::open(file_name).unwrap());
-        arch.unpack(get_home() + "/.config/raven/themes/").expect(
-            "Couldn't unpack theme archive",
-        );
-        println!("Imported theme.");
-    }
-}
+
 fn add_to_theme(theme_name: &str, option: &str, path: &str) {
     //Add an option to a theme
     let cur_theme = load_theme(theme_name).unwrap();
