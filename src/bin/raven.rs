@@ -294,11 +294,7 @@ fn interpet_args() {
             "edit" => edit(&args[2]),
             "cycle" => manage_daemon(&args[2]),
             "info" => print_info(conf.editing),
-            "export" => ravens::export(&args[2]),
-            "import" => ravens::import(&args[2]),
-            "publish" => ravens::upload_theme((&args[2]).to_string()),
-            "create" => ravens::create_user((&args[2]).to_string(), (&args[3]).to_string()),
-            "login" => ravens::login_user((&args[2]).to_string(), (&args[3]).to_string()),
+            "manage" => process_manage_args(args.clone()),
             "refresh" => refresh_theme(conf.last),
             "install" => ravens::download_theme((&args[2]).to_string()),
             "add" => add_to_theme(&conf.editing, &args[2], &args[3]),
@@ -307,6 +303,21 @@ fn interpet_args() {
             _ => println!("Unknown command. raven help for commands."),
         }
 
+    }
+}
+fn process_manage_args(args: Vec<String>) {
+    let cmd2 = (&args[2]).as_ref();
+    if !check_args_cmd(args.len() - 3, cmd2) {
+        println!("Not enough arguments for {}", &cmd2);
+        ::std::process::exit(64);
+    }
+    match cmd2 {
+            "export" => ravens::export(&args[3]),
+            "import" => ravens::import(&args[3]),
+            "publish" => ravens::upload_theme((&args[3]).to_string()),
+            "create" => ravens::create_user((&args[3]).to_string(), (&args[4]).to_string()),
+            "login" => ravens::login_user((&args[3]).to_string(), (&args[4]).to_string()),
+        _ => println!("Manage requires a subcommand. Run raven help for more info."),
     }
 }
 fn print_info(editing: String) {
@@ -332,6 +343,11 @@ fn check_args_cmd(num: usize, command: &str) -> bool {
         "add" => 2,
         "import" => 1,
         "export" => 1,
+        "import" => 1,
+        "create" => 2,
+        "login" => 2,
+        "publish" => 1,
+        "install" => 1,
         "delete" => 1,
         _ => 0,
     };
@@ -684,12 +700,17 @@ fn print_help() {
     println!("edit [theme] : initialize editing [theme]");
     println!("modify [option] : open the currently edited themes's [option] in $EDITOR");
     println!("add [option] [file] : add option to current theme");
-    println!("import [archive] : import an exported theme");
-    println!("export [theme] : export target theme to a tarball");
     println!("rm [option] : remove option from current theme");
     println!("cycle {{check|start|stop}} : manage theme cycling daemon");
     println!("info : print info about the theme being currently edited");
     println!("menu : show theme menu");
+    println!("install [name] : try to install a theme from the online repo");
+    println!("manage [subcommand] : manage online theme publishing with subcommands");
+    println!("      - import [archive] : import an exported theme");
+    println!("      - export [theme] : export target theme to a tarball");
+    println!("      - create [username] [password] : create a new user");
+    println!("      - login [username] [password] : login to a user profile");
+    println!("      - publish [theme] : when logged in, publish a theme online");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
