@@ -300,6 +300,7 @@ fn interpet_args() {
             "create" => ravens::create_user((&args[2]).to_string(), (&args[3]).to_string()),
             "login" => ravens::login_user((&args[2]).to_string(), (&args[3]).to_string()),
             "refresh" => refresh_theme(conf.last),
+            "install" => ravens::download_theme((&args[2]).to_string()),
             "add" => add_to_theme(&conf.editing, &args[2], &args[3]),
             "rm" => rm_from_theme(&conf.editing, &args[2]),
             "menu" => show_menu(conf.menu_command),

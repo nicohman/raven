@@ -1,23 +1,12 @@
 pub mod ravens {
     use std::fs;
-    use std::fs::{File, OpenOptions, DirEntry};
+    use std::fs::{File, OpenOptions};
     use std::io::Read;
     use std::env;
-    use std::process::Command;
-    use serde_derive;
-    use serde;
     use serde_json;
-    use std::io::{self, Write};
-    use std::str::FromStr;
+    use std::io::Write;
     use tar::{Archive, Builder};
-    use hyper::Client;
     use reqwest;
-    use reqwest::mime::Mime;
-    use reqwest::header::{Headers, ContentType};
-    use hyper::method::Method;
-    use hyper::client::request::Request;
-    use multipart::client::Multipart;
-    use hyper;
     fn get_home() -> String {
         return String::from(env::home_dir().unwrap().to_str().unwrap());
     }
@@ -29,7 +18,7 @@ pub mod ravens {
     pub fn load_info() -> Result<UserInfo, String> {
         if fs::metadata(get_home() + "/.config/raven/ravenserver.json").is_ok() {
             let mut info = String::new();
-            fs::File::open(get_home() + "/.config/raven/ravenserver.json")
+            File::open(get_home() + "/.config/raven/ravenserver.json")
                 .expect("Couldn't read user info")
                 .read_to_string(&mut info)
                 .unwrap();
@@ -107,14 +96,13 @@ pub mod ravens {
     }
     pub fn upload_theme(name: String) {
         let info = load_info().unwrap();
-        let client = reqwest::Client::new();
         if fs::metadata(get_home() + "/.config/raven/themes/" + &name).is_ok() {
             export(&name);
             if fs::metadata(name.clone() + ".tar").is_ok() {
                 let form = reqwest::multipart::Form::new()
                     .file("fileupload", name.clone() + ".tar")
                     .unwrap();
-                let mut res = reqwest::Client::new()
+                let res = reqwest::Client::new()
                     .post(
                         &("https://demenses.net/themes/upload?name=".to_string() + &name +
                               "&token=" +
@@ -124,7 +112,7 @@ pub mod ravens {
                     .send();
 
                 if res.is_ok() {
-                    let mut res = res.unwrap();
+                    let res = res.unwrap();
                     if res.status().is_success() {
                         if res.status() == reqwest::StatusCode::Created {
                             println!("Theme successfully uploaded.");
@@ -152,6 +140,36 @@ pub mod ravens {
             }
         } else {
             println!("That theme does not exist");
+        }
+    }
+    pub fn download_theme(name: String) {
+        let client = reqwest::Client::new();
+        let res = client
+            .get(&("https://demenses.net/themes/repo/".to_string() + &name))
+            .send();
+        if res.is_ok() {
+            let mut res = res.unwrap();
+            if res.status().is_success() {
+                let mut file = OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(name.clone() + ".tar")
+                    .expect("Couldn't write theme file");
+                res.copy_to(&mut file).expect("Couldn't pipe to archive");
+                println!("Downloaded theme");
+                import(&(name.clone()+".tar"));
+                println!("Imported theme. Removing archive.");
+                fs::remove_file(name.clone()+".tar").unwrap();
+            } else {
+                if res.status() == reqwest::StatusCode::NotFound {
+                    println!("Theme has not been uploaded");
+                } else {
+                    println!("Server error. Code {:?}", res.status());
+                }
+            }
+        } else {
+            println!("Something went wrong with downloading the theme. Error message:");
+            println!("{:?}", res);
         }
     }
     pub fn login_user(name: String, pass: String) {
