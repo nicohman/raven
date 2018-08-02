@@ -312,12 +312,20 @@ fn process_manage_args(args: Vec<String>) {
         ::std::process::exit(64);
     }
     match cmd2 {
-            "export" => ravens::export(&args[3]),
-            "import" => ravens::import(&args[3]),
-            "publish" => ravens::upload_theme((&args[3]).to_string()),
-            "create" => ravens::create_user((&args[3]).to_string(), (&args[4]).to_string()),
-            "unpublish" => ravens::unpublish_theme((&args[3]).to_string()),
-            "login" => ravens::login_user((&args[3]).to_string(), (&args[4]).to_string()),
+        "export" => ravens::export(&args[3]),
+        "import" => ravens::import(&args[3]),
+        "publish" => ravens::upload_theme((&args[3]).to_string()),
+        "create" => {
+            ravens::create_user(
+                (&args[3]).to_string(),
+                (&args[4]).to_string(),
+                (&args[5]).to_string(),
+            )
+        }
+        "unpublish" => ravens::unpublish_theme((&args[3]).to_string()),
+        "login" => ravens::login_user((&args[3]).to_string(), (&args[4]).to_string()),
+        "logout" => ravens::logout(),
+        "delete_user" => ravens::delete_user((&args[3]).to_string()),
         _ => println!("Manage requires a subcommand. Run raven help for more info."),
     }
 }
@@ -345,8 +353,9 @@ fn check_args_cmd(num: usize, command: &str) -> bool {
         "import" => 1,
         "export" => 1,
         "import" => 1,
-        "create" => 2,
+        "create" => 3,
         "login" => 2,
+        "delete_user" => 1,
         "unpublish" => 1,
         "publish" => 1,
         "install" => 1,
@@ -710,10 +719,12 @@ fn print_help() {
     println!("manage [subcommand] : manage online theme publishing with subcommands");
     println!("      - import [archive] : import an exported theme");
     println!("      - export [theme] : export target theme to a tarball");
-    println!("      - create [username] [password] : create a new user");
+    println!("      - create [username] [password] [repeat password] : create a new user");
     println!("      - unpublish [name] : delete a published theme from repo");
     println!("      - login [username] [password] : login to a user profile");
     println!("      - publish [theme] : when logged in, publish a theme online");
+    println!("      - logout : logout of a user profile");
+    println!("      - delete_user [password] : delete your user profile and any owned themes.");
 }
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());

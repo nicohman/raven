@@ -68,30 +68,73 @@ pub mod ravens {
         fs::copy(&winfpath, &infpath).unwrap();
         fs::remove_file(&winfpath).unwrap();
     }
-    pub fn create_user(name: String, pass: String) {
+    pub fn logout() {
+        fs::remove_file(get_home() + "/.config/raven/ravenserver.json")
+            .expect("Couldn't delete user info file");
+        println!("Successfully logged you out");
+    }
+    pub fn delete_user(pass: String) {
+        let info = load_info().unwrap();
         let client = reqwest::Client::new();
         let res = client
             .post(
-                &("https://demenses.net/themes/user/create?name=".to_string() + &name + "&pass=" +
-                    &pass),
+                &("https://demenses.net/themes/users/delete/".to_string() + &info.name +
+                      "?token=" + &info.token + "&pass=" + &pass),
             )
             .send();
         if res.is_ok() {
             let res = res.unwrap();
             if res.status().is_success() {
-                println!(
-                    "Successfully created user. Now, sign in with `raven login [name] [password]`"
-                );
+                println!("Successfully deleted user and all owned themes. Logging out");
+                logout();
             } else {
                 if res.status() == reqwest::StatusCode::Forbidden {
-                    println!("User already created. Pick a different name!");
+                    println!("You are trying to delete a user you are not. Bad!");
+                } else if res.status() == reqwest::StatusCode::Unauthorized {
+                    println!(
+                        "You're trying to delete a user without proving adequate authentication credentials"
+                    );
+                } else if res.status() == reqwest::StatusCode::NotFound {
+                    println!("You're trying to delete a user that doesn't exist");
                 } else {
                     println!("Server error. Code {:?}", res.status());
                 }
             }
         } else {
-            println!("Something went wrong with creating a user. Error message:");
+            println!("Something went wrong with deleting your user. Error message:");
             println!("{:?}", res);
+
+        }
+    }
+    pub fn create_user(name: String, pass: String, pass2: String) {
+        if pass == pass2 {
+            let client = reqwest::Client::new();
+            let res = client
+                .post(
+                    &("https://demenses.net/themes/user/create?name=".to_string() + &name +
+                          "&pass=" +
+                          &pass),
+                )
+                .send();
+            if res.is_ok() {
+                let res = res.unwrap();
+                if res.status().is_success() {
+                    println!(
+                        "Successfully created user. Now, sign in with `raven login [name] [password]`"
+                    );
+                } else {
+                    if res.status() == reqwest::StatusCode::Forbidden {
+                        println!("User already created. Pick a different name!");
+                    } else {
+                        println!("Server error. Code {:?}", res.status());
+                    }
+                }
+            } else {
+                println!("Something went wrong with creating a user. Error message:");
+                println!("{:?}", res);
+            }
+        } else {
+            println!("Passwords need to match");
         }
     }
     pub fn upload_theme(name: String) {
@@ -140,14 +183,20 @@ pub mod ravens {
             }
         } else {
             println!("That theme does not exist");
-            }
+        }
     }
-    pub fn unpublish_theme(name:String) {
+    pub fn unpublish_theme(name: String) {
         let info = load_info().unwrap();
         let client = reqwest::Client::new();
-        let res = client.post(&("https://demenses.net/themes/delete/".to_string()+&name+"?token="+&info.token)).send();
+        let res =
+            client
+                .post(
+                    &("https://demenses.net/themes/delete/".to_string() + &name + "?token=" +
+                          &info.token),
+                )
+                .send();
         if res.is_ok() {
-            let mut res = res.unwrap();
+            let res = res.unwrap();
             if res.status().is_success() {
                 println!("Successfully unpublished theme");
             } else {
@@ -159,7 +208,7 @@ pub mod ravens {
                     println!("Did not provide a valid login token");
                 } else {
                     println!("Server error. Code {:?}", res.status());
-                
+
                 }
             }
         } else {
@@ -182,9 +231,9 @@ pub mod ravens {
                     .expect("Couldn't write theme file");
                 res.copy_to(&mut file).expect("Couldn't pipe to archive");
                 println!("Downloaded theme");
-                import(&(name.clone()+".tar"));
+                import(&(name.clone() + ".tar"));
                 println!("Imported theme. Removing archive.");
-                fs::remove_file(name.clone()+".tar").unwrap();
+                fs::remove_file(name.clone() + ".tar").unwrap();
             } else {
                 if res.status() == reqwest::StatusCode::NotFound {
                     println!("Theme has not been uploaded");
