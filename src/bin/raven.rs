@@ -319,7 +319,8 @@ fn process_manage_args(args: Vec<String>) {
                 (&args[4]).to_string(),
                 (&args[5]).to_string(),
             )
-        }
+        },
+        "meta" => ravens::pub_metadata((&args[3]).to_string(),(&args[4]).to_string(),(&args[5]).to_string()),
         "unpublish" => ravens::unpublish_theme((&args[3]).to_string()),
         "login" => ravens::login_user((&args[3]).to_string(), (&args[4]).to_string()),
         "logout" => ravens::logout(),
@@ -351,6 +352,7 @@ fn check_args_cmd(num: usize, command: &str) -> bool {
         "import" => 1,
         "export" => 1,
         "import" => 1,
+        "meta" => 3,
         "create" => 3,
         "login" => 2,
         "delete_user" => 1,
@@ -722,6 +724,7 @@ fn print_help() {
     println!("      - login [username] [password] : login to a user profile");
     println!("      - publish [theme] : when logged in, publish a theme online");
     println!("      - logout : logout of a user profile");
+    println!("      - meta [theme] [type] [value] : update the metadata of a published theme, either `screen`(a url to a screenshot) or `description`");
     println!("      - delete_user [password] : delete your user profile and any owned themes.");
 }
 fn get_home() -> String {
