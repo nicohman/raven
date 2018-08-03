@@ -251,8 +251,6 @@ impl Theme {
     }
 }
 fn main() {
-
-
     interpet_args();
 }
 fn interpet_args() {

@@ -185,6 +185,28 @@ pub mod ravens {
             println!("That theme does not exist");
         }
     }
+    pub fn pub_metadata(name:String, typem:String, value:String) {
+        let info = load_info().unwrap();
+        let client = reqwest::Client::new();
+        let res = client.post(&("https://demenses.net/themes/meta/".to_string()+&name+"?typem="+&typem+"&value="+&value+"&token="+&info.token)).send();
+        if res.is_ok() {
+            let res = res.unwrap();
+            if res.status().is_success() {
+                println!("Successfully updated theme metadata");
+            } else {
+                if res.status() == reqwest::StatusCode::NotFound {
+                    println!("That theme hasn't been published");
+                } else if res.status() == reqwest::StatusCode::Forbidden {
+                    println!("Can't edit the metadata of a theme that isn't yours");
+                } else if res.status() == reqwest::StatusCode::PreconditionFailed {
+                    println!("That isn't a valid metadata type");
+                } else {
+                    println!("Server error. Code {:?}", res.status());
+                
+                }
+            }
+        }
+    }
     pub fn unpublish_theme(name: String) {
         let info = load_info().unwrap();
         let client = reqwest::Client::new();
