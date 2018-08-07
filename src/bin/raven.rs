@@ -89,10 +89,7 @@ impl Theme {
             .expect("Couldn't run pywal");
     }
     fn load_script(&self) {
-        Command::new(
-            get_home() + "/.config/raven/themes/" + &self.name + "/script",
-        ).output()
-            .expect("Couldn't run custom script");
+        Command::new("sh").arg("-c").arg(get_home() + "/.config/raven/themes/" + &self.name + "/script").output().expect("Couldn't run custom script");
     }
     fn load_openbox(&self) {
         let mut base = String::new();

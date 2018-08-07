@@ -125,6 +125,8 @@ pub mod ravens {
                 } else {
                     if res.status() == reqwest::StatusCode::Forbidden {
                         println!("User already created. Pick a different name!");
+                    } else if res.status() == reqwest::StatusCode::PayloadTooLarge {
+                        println!("Either your username or password was too long. The limit is 20 characters for username, and 100 for password.");
                     } else {
                         println!("Server error. Code {:?}", res.status());
                     }
@@ -200,7 +202,9 @@ pub mod ravens {
                     println!("Can't edit the metadata of a theme that isn't yours");
                 } else if res.status() == reqwest::StatusCode::PreconditionFailed {
                     println!("That isn't a valid metadata type");
-                } else {
+                } else if res.status() == reqwest::StatusCode::PayloadTooLarge {
+                    println!("Your description or screenshot url was more than 200 characters long. Please shorten itt.");
+                }else {
                     println!("Server error. Code {:?}", res.status());
                 
                 }
@@ -238,6 +242,13 @@ pub mod ravens {
             println!("{:?}", res);
         }
     }
+    pub fn install_warning(esp: bool) {
+        println!("Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at http://demenses.net and it will be removed.");
+        if esp {
+            println!("This theme should be scrutinized more carefully as it includes a bash script which will be run automatically.");
+        }
+        println!("Thank you for helping keep the repo clean!");
+    }
     pub fn download_theme(name: String) {
         let client = reqwest::Client::new();
         let res = client
@@ -256,6 +267,11 @@ pub mod ravens {
                 import(&(name.clone() + ".tar"));
                 println!("Imported theme. Removing archive.");
                 fs::remove_file(name.clone() + ".tar").unwrap();
+                if fs::metadata(get_home()+"/.config/raven/themes/"+&name+"/script").is_ok() || fs::metadata(get_home()+"/.config/raven/themes/"+&name+"/lemonbar").is_ok() {
+                    install_warning(true);
+                } else {
+                install_warning(false);
+                }
             } else {
                 if res.status() == reqwest::StatusCode::NotFound {
                     println!("Theme has not been uploaded");
