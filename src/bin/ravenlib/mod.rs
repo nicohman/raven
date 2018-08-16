@@ -258,6 +258,9 @@ pub mod rlib {
                     false
                 }
     }
+    pub fn get_themes () -> Vec<String> {
+        fs::read_dir(get_home()+"/.config/raven/themes").unwrap().into_iter().map(|x| proc_path(x.unwrap())).collect::<Vec<String>>()
+    }
     pub  fn check_themes() {
         let entries = fs::read_dir(get_home() + "/.config/raven/themes").unwrap();
         for entry in entries {
