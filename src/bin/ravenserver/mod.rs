@@ -1,5 +1,6 @@
 pub mod ravens {
     use std::fs;
+    use std::io;
     use std::fs::{File, OpenOptions};
     use std::io::Read;
     use std::env;
@@ -92,8 +93,7 @@ pub mod ravens {
                     println!("You are trying to delete a user you are not. Bad!");
                 } else if res.status() == reqwest::StatusCode::Unauthorized {
                     println!(
-                        "You're trying to delete a user without proving adequate authentication credentials"
-                    );
+                        "You're trying to delete a user w/o providing authentication credentials");
                 } else if res.status() == reqwest::StatusCode::NotFound {
                     println!("You're trying to delete a user that doesn't exist");
                 } else {
@@ -119,14 +119,14 @@ pub mod ravens {
             if res.is_ok() {
                 let res = res.unwrap();
                 if res.status().is_success() {
-                    println!(
-                        "Successfully created user. Now, sign in with `raven login [name] [password]`"
-                    );
+                    println!("Successfully created user. Sign in with `raven login [name] [password]`");
                 } else {
                     if res.status() == reqwest::StatusCode::Forbidden {
                         println!("User already created. Pick a different name!");
                     } else if res.status() == reqwest::StatusCode::PayloadTooLarge {
-                        println!("Either your username or password was too long. The limit is 20 characters for username, and 100 for password.");
+                        println!(
+                            "Either your username or password was too long. The limit is 20 characters for username, and 100 for password."
+                        );
                     } else {
                         println!("Server error. Code {:?}", res.status());
                     }
@@ -179,18 +179,21 @@ pub mod ravens {
 
                 }
             } else {
-                println!(
-                    "Something has gone wrong. Check if the theme file was written to current directory."
-                );
+                println!("Something has gone wrong. Check if the theme file was written to current directory.");
             }
         } else {
             println!("That theme does not exist");
         }
     }
-    pub fn pub_metadata(name:String, typem:String, value:String) {
+    pub fn pub_metadata(name: String, typem: String, value: String) {
         let info = load_info().unwrap();
         let client = reqwest::Client::new();
-        let res = client.post(&("https://demenses.net/themes/meta/".to_string()+&name+"?typem="+&typem+"&value="+&value+"&token="+&info.token)).send();
+        let res = client
+            .post(
+                &("https://demenses.net/themes/meta/".to_string() + &name + "?typem=" +
+                      &typem + "&value=" + &value + "&token=" + &info.token),
+            )
+            .send();
         if res.is_ok() {
             let res = res.unwrap();
             if res.status().is_success() {
@@ -203,10 +206,12 @@ pub mod ravens {
                 } else if res.status() == reqwest::StatusCode::PreconditionFailed {
                     println!("That isn't a valid metadata type");
                 } else if res.status() == reqwest::StatusCode::PayloadTooLarge {
-                    println!("Your description or screenshot url was more than 200 characters long. Please shorten itt.");
-                }else {
+                    println!(
+                        "Your description or screenshot url was more than 200 characters long. Please shorten itt."
+                    );
+                } else {
                     println!("Server error. Code {:?}", res.status());
-                
+
                 }
             }
         }
@@ -243,9 +248,13 @@ pub mod ravens {
         }
     }
     pub fn install_warning(esp: bool) {
-        println!("Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at http://demenses.net and it will be removed.");
+        println!(
+            "Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at http://demenses.net and it will be removed."
+        );
         if esp {
-            println!("This theme should be scrutinized more carefully as it includes a bash script which will be run automatically.");
+            println!(
+                "This theme should be scrutinized more carefully as it includes a bash script which will be run automatically."
+            );
         }
         println!("Thank you for helping keep the repo clean!");
     }
@@ -263,15 +272,53 @@ pub mod ravens {
                     .open(name.clone() + ".tar")
                     .expect("Couldn't write theme file");
                 res.copy_to(&mut file).expect("Couldn't pipe to archive");
-                println!("Downloaded theme");
-                import(&(name.clone() + ".tar"));
-                println!("Imported theme. Removing archive.");
-                fs::remove_file(name.clone() + ".tar").unwrap();
-                if fs::metadata(get_home()+"/.config/raven/themes/"+&name+"/script").is_ok() || fs::metadata(get_home()+"/.config/raven/themes/"+&name+"/lemonbar").is_ok() {
-                    install_warning(true);
+                println!("Downloaded theme.");
+                if res.status() == reqwest::StatusCode::AlreadyReported {
+                    print!(
+                        "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Are you sure you would like to continue? (y/n)"
+                    );
+                    io::stdout().flush();
+                    let mut r = String::new();
+                    io::stdin().read_line(&mut r).unwrap();
+                    if r.trim() == "y" {
+                        println!(
+                            "Continuing. Please look carefully at the theme files in ~/.config/raven/themes/{} before loading this theme.",
+                            name.clone()
+                        );
+                        import(&(name.clone() + ".tar"));
+                        println!("Imported theme. Removing archive.");
+                        fs::remove_file(name.clone() + ".tar").unwrap();
+                        if fs::metadata(
+                            get_home() + "/.config/raven/themes/" + &name + "/script",
+                        ).is_ok() ||
+                            fs::metadata(
+                                get_home() + "/.config/raven/themes/" + &name + "/lemonbar",
+                            ).is_ok()
+                        {
+                            install_warning(true);
+                        } else {
+                            install_warning(false);
+                        }
+                    } else {
+                        println!("Removing downloaded archive.");
+                        fs::remove_file(name.clone() + ".tar").unwrap();
+                    }
                 } else {
-                install_warning(false);
+                    import(&(name.clone() + ".tar"));
+                    println!("Imported theme. Removing archive.");
+                    fs::remove_file(name.clone() + ".tar").unwrap();
+                    if fs::metadata(get_home() + "/.config/raven/themes/" + &name + "/script")
+                        .is_ok() ||
+                        fs::metadata(get_home() + "/.config/raven/themes/" + &name + "/lemonbar")
+                            .is_ok()
+                    {
+                        install_warning(true);
+                    } else {
+                        install_warning(false);
+                    }
+
                 }
+
             } else {
                 if res.status() == reqwest::StatusCode::NotFound {
                     println!("Theme has not been uploaded");
