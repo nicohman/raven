@@ -277,7 +277,7 @@ pub mod ravens {
                     print!(
                         "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Are you sure you would like to continue? (y/n)"
                     );
-                    io::stdout().flush();
+                    io::stdout().flush().unwrap();
                     let mut r = String::new();
                     io::stdin().read_line(&mut r).unwrap();
                     if r.trim() == "y" {

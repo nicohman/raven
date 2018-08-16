@@ -49,8 +49,12 @@ pub mod rlib {
     }
     impl Theme {
         pub fn load_all(&self) {
-            for option in &self.options {
-                match option.to_lowercase().as_ref() {
+            let opt = &self.options;
+            let mut i = 1;
+            let len = opt.len();
+            while i <= len {
+                let ref option = opt[len - i ];
+                    match option.to_lowercase().as_ref() {
                     "poly" => self.load_poly(self.monitor),
                     "wm" => self.load_i3(true),
                     "i3" => self.load_i3(false),
@@ -71,6 +75,7 @@ pub mod rlib {
                 if !option.contains("|") {
                     println!("Loaded option {}", option);
                 }
+                i +=  1;
 
             }
             println!("Loaded all options for theme {}", self.name);
