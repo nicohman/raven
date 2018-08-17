@@ -6,6 +6,10 @@ A theme manager for linux, currently focusing on i3. Supports multiple different
 
 ![A gif showing raven working](https://thumbs.gfycat.com/MenacingHandsomeCobra-size_restricted.gif)
 
+## ThemeHub
+
+Raven supports installing themes from and publishing themes to [ThemeHub](https://demenses.net). I encourage everyone to share their themes and rices there!
+
 ## Installation
 All you technically require is [cargo](https://github.com/rust-lang/cargo) to be installed.
 You can install from [crates.io](https://crates.io/crates/raventhemer) by running `cargo install raventhemer`, or by building manually:
@@ -42,6 +46,7 @@ The following packages are required for their relevant options:
 
 + [Rofi](https://github.com/DaveDavenport/rofi) is used in the default config and is recommended.
 
+* New option suggestions are very welcome!
 
 You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
 
@@ -55,14 +60,23 @@ new [theme] : create a new theme
 delete [theme] : delete a theme
 refresh : load last loaded theme
 edit [theme] : initialize editing [theme]
-import [archive] : import an exported theme
-export [theme] : export target theme to a tarball
 modify [option] : open the currently edited themes's [option] in $EDITOR
 add [option] [file] : add option to current theme
-cycle {{check|start|stop}} : manage theme cycling daemon
 rm [option] : remove option from current theme
+cycle {check|start|stop} : manage theme cycling daemon
 info : print info about the theme being currently edited
 menu : show theme menu
+install [name] : try to install a theme from the online repo
+manage [subcommand] : manage online theme publishing with subcommands
+      - import [archive] : import an exported theme
+      - export [theme] : export target theme to a tarball
+      - create [username] [password] [repeat password] : create a new user
+      - unpublish [name] : delete a published theme from repo
+      - login [username] [password] : login to a user profile
+      - publish [theme] : when logged in, publish a theme online
+      - logout : logout of a user profile
+      - meta [theme] [type] [value] : update the metadata of a published theme, either `screen`(a url to a screenshot) or `description`
+      - delete_user [password] : delete your user profile and any owned themes.
 ```
 
 ## Configuration
@@ -95,7 +109,7 @@ If you place an i3 config named base\_i3 in ~/.config/raven, the contents of i3 
 The lemonbar option should be a shell script that runs lemonbar(s). They will automatically be killed just like polybars when the theme is changed or reloaded.
 
 ### Polybar bar names
-As many polybars as you have monitors will be started. The names of the bars themselves should be configured in `config.json`. The default is ["main", "other"]
+As many polybars as you have monitors will be started. The names of the bars themselves should be configured in `config.json`. The default is ["main", "other"]. If yu're sharing your themes with others, it is recommended that you leave the polybar monitor name blank, so that it automatically adapts to other monitor names.
 
 ### Cycle themes
 
