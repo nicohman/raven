@@ -11,7 +11,7 @@ pub mod rlib {
     fn get_home() -> String {
         return String::from(env::home_dir().unwrap().to_str().unwrap());
     }
-#[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct ThemeStore {
         pub name: String,
         pub options: Vec<String>,
@@ -26,7 +26,7 @@ pub mod rlib {
         pub order: Vec<String>,
     }
     //Config structure for holding all main config options
-#[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug)]
     pub struct Config {
         pub monitors: i32,
         pub polybar: Vec<String>,
@@ -53,8 +53,8 @@ pub mod rlib {
             let mut i = 1;
             let len = opt.len();
             while i <= len {
-                let ref option = opt[len - i ];
-                    match option.to_lowercase().as_ref() {
+                let ref option = opt[len - i];
+                match option.to_lowercase().as_ref() {
                     "poly" => self.load_poly(self.monitor),
                     "wm" => self.load_i3(true),
                     "i3" => self.load_i3(false),
@@ -66,6 +66,7 @@ pub mod rlib {
                     "termite" => self.load_termite(),
                     "script" => self.load_script(),
                     "bspwm" => self.load_bspwm(),
+                    "rofi" => self.load_rofi(),
                     "ranger" => self.load_ranger(),
                     "lemonbar" => self.load_lemon(),
                     "openbox" => self.load_openbox(),
@@ -75,13 +76,50 @@ pub mod rlib {
                 if !option.contains("|") {
                     println!("Loaded option {}", option);
                 }
-                i +=  1;
+                i += 1;
 
             }
             println!("Loaded all options for theme {}", self.name);
 
         }
+        pub fn load_rofi(&self) {
+            let conf = "rofi.theme: ".to_string() + &get_home() + "/.config/raven/themes/" +
+                &self.name + "/rofi";
+            let mut pre = String::new();
+            if fs::metadata(get_home() + "/.config/rofi").is_err() {
+                fs::create_dir(get_home() + "/.config/rofi").unwrap();
+            }
+            if fs::metadata(get_home() + "/.config/rofi/config").is_ok() {
+                fs::File::open(get_home() + "/.config/rofi/config")
+                    .expect("Couldn't open rofi config")
+                    .read_to_string(&mut pre)
+                    .unwrap();
+                let mut finals = String::new();
+                for  line in pre.lines() {
+                    if !line.contains("theme") && line.len() > 1{
+                        finals = finals + &line.trim()+"\n";
+                    }
+                }
+                pre = finals+  "\n" + &conf;
+                OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(get_home() + "/.config/rofi/config")
+                    .expect("Couldn't open rofi config")
+                    .write_all(pre.as_bytes())
+                    .unwrap();
 
+            } else {
+                OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(get_home() + "/.config/rofi/config")
+                    .expect("Couldn't open rofi config")
+                    .write_all(conf.as_bytes())
+                    .unwrap();
+
+            }
+        }
         pub fn load_pywal(&self) {
             let arg = get_home() + "/.config/raven/themes/" + &self.name + "/pywal";
             Command::new("wal")
@@ -92,7 +130,13 @@ pub mod rlib {
                 .expect("Couldn't run pywal");
         }
         pub fn load_script(&self) {
-            Command::new("sh").arg("-c").arg(get_home() + "/.config/raven/themes/" + &self.name + "/script").output().expect("Couldn't run custom script");
+            Command::new("sh")
+                .arg("-c")
+                .arg(
+                    get_home() + "/.config/raven/themes/" + &self.name + "/script",
+                )
+                .output()
+                .expect("Couldn't run custom script");
         }
 
         pub fn load_openbox(&self) {
@@ -107,7 +151,7 @@ pub mod rlib {
             let mut rest = String::new();
             fs::File::open(
                 get_home() + "/.config/raven/themes/" + &self.name + "/openbox",
-                ).unwrap()
+            ).unwrap()
                 .read_to_string(&mut rest)
                 .unwrap();
             base.push_str(&rest);
@@ -128,14 +172,14 @@ pub mod rlib {
             fs::copy(
                 get_home() + "/.config/raven/themes/" + &self.name + "/ranger",
                 get_home() + "/.config/ranger/rc.conf",
-                ).expect("Couldn't overwrite ranger config");
+            ).expect("Couldn't overwrite ranger config");
         }
 
         pub fn load_ncm(&self) {
             fs::copy(
                 get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
                 get_home() + "/.ncmpcpp/config",
-                ).expect("Couldn't overwrite ncmpcpp config");
+            ).expect("Couldn't overwrite ncmpcpp config");
 
         }
         pub fn load_bspwm(&self) {
@@ -149,7 +193,7 @@ pub mod rlib {
             let mut app = String::new();
             fs::File::open(
                 get_home() + "/.config/raven/themes/" + &self.name + "/bspwm",
-                ).unwrap()
+            ).unwrap()
                 .read_to_string(&mut app)
                 .unwrap();
 
@@ -164,7 +208,7 @@ pub mod rlib {
                 .unwrap();
             Command::new("bspc").arg("reload").output().expect(
                 "Couldn't reload bspwm",
-                );
+            );
         }
         pub fn load_i3(&self, isw: bool) {
             let mut config = String::new();
@@ -197,13 +241,13 @@ pub mod rlib {
                 .unwrap();
             Command::new("i3-msg").arg("reload").output().expect(
                 "Couldn't reload i3",
-                );
+            );
         }
         pub fn load_termite(&self) {
             fs::copy(
                 get_home() + "/.config/raven/themes/" + &self.name + "/termite",
                 get_home() + "/.config/termite/config",
-                ).expect("Couldn't overwrite termite config");
+            ).expect("Couldn't overwrite termite config");
             Command::new("pkill")
                 .arg("-SIGUSR1")
                 .arg("termite")
@@ -216,9 +260,10 @@ pub mod rlib {
                     .arg("-c")
                     .arg(
                         String::from("polybar --config=") + &get_home() +
-                        "/.config/raven/themes/" + &self.name + "/poly " +
-                        &self.order[number as usize] + " > /dev/null 2> /dev/null",
-                        )
+                            "/.config/raven/themes/" + &self.name +
+                            "/poly " + &self.order[number as usize] +
+                            " > /dev/null 2> /dev/null",
+                    )
                     .spawn()
                     .expect("Failed to run polybar");
             }
@@ -227,7 +272,7 @@ pub mod rlib {
             Command::new("sh")
                 .arg(
                     get_home() + "/.config/raven/themes/" + &self.name + "/lemonbar",
-                    )
+                )
                 .spawn()
                 .expect("Failed to run lemonbar script");
         }
@@ -247,23 +292,22 @@ pub mod rlib {
             }
             xres.arg(
                 get_home() + "/.config/raven/themes/" + &self.name + "/" + &name,
-                ).output()
+            ).output()
                 .expect("Could not run xrdb");
 
         }
-
     }
     pub fn check_init() -> bool {
         if fs::metadata(get_home() + "/.config/raven").is_err() ||
             fs::metadata(get_home() + "/.config/raven/config.json").is_err() ||
-                fs::metadata(get_home() + "/.config/raven/themes").is_err()
-                {
-                    true
-                } else {
-                    false
-                }
+            fs::metadata(get_home() + "/.config/raven/themes").is_err()
+        {
+            true
+        } else {
+            false
+        }
     }
-    pub  fn check_themes() {
+    pub fn check_themes() {
         let entries = fs::read_dir(get_home() + "/.config/raven/themes").unwrap();
         for entry in entries {
             let entry = proc_path(entry.unwrap());
@@ -280,7 +324,7 @@ pub mod rlib {
         } else {
             println!(
                 "The config file format has changed. Please check ~/.config/raven/config.json to reconfigure raven."
-                );
+            );
         }
         let mut file = OpenOptions::new()
             .create(true)
@@ -294,7 +338,7 @@ pub mod rlib {
     pub fn start_daemon() {
         Command::new("sh").arg("-c").arg("ravend").spawn().expect(
             "Couldn't start daemon.",
-            );
+        );
         println!("Started cycle daemon.");
 
     }
@@ -309,7 +353,7 @@ pub mod rlib {
     pub fn check_daemon() -> bool {
         let out = Command::new("ps").arg("aux").output().expect(
             "Couldn't find daemon",
-            );
+        );
         let form_out = String::from_utf8_lossy(&out.stdout);
         let line_num = form_out.lines().filter(|x| x.contains("ravend")).count();
         if line_num > 0 { true } else { false }
@@ -357,7 +401,7 @@ pub mod rlib {
                 .write(true)
                 .open(
                     get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
-                    )
+                )
                 .expect("can open");
             file.write_all((String::from("|")).as_bytes()).unwrap();
             edit(&theme_name);
@@ -390,7 +434,7 @@ pub mod rlib {
         fs::copy(
             totpath,
             get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
-            ).expect("Couldn't copy config in");
+        ).expect("Couldn't copy config in");
 
     }
     pub fn rm_from_theme(theme_name: &str, option: &str) {
@@ -435,7 +479,7 @@ pub mod rlib {
         fs::copy(
             get_home() + "/.config/raven/~config.json",
             get_home() + "/.config/raven/config.json",
-            ).unwrap();
+        ).unwrap();
         fs::remove_file(get_home() + "/.config/raven/~config.json").unwrap();
     }
     pub fn up_theme(theme: ThemeStore) {
@@ -456,7 +500,7 @@ pub mod rlib {
         let mut theme = String::new();
         fs::File::open(
             get_home() + "/.config/raven/themes/" + theme_name + "/theme",
-            ).expect("Couldn't read theme")
+        ).expect("Couldn't read theme")
             .read_to_string(&mut theme)
             .unwrap();
         let options = theme
@@ -472,13 +516,13 @@ pub mod rlib {
         };
         fs::remove_file(
             get_home() + "/.config/raven/themes/" + theme_name + "/theme",
-            ).unwrap();
+        ).unwrap();
         OpenOptions::new()
             .create(true)
             .write(true)
             .open(
                 get_home() + "/.config/raven/themes/" + theme_name + "/theme.json",
-                )
+            )
             .expect("Can't open theme.json")
             .write_all(serde_json::to_string(&themes).unwrap().as_bytes())
             .unwrap();
@@ -492,12 +536,12 @@ pub mod rlib {
             println!("Found theme {}", theme_name);
             if fs::metadata(
                 get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json",
-                ).is_ok()
+            ).is_ok()
             {
                 let mut theme = String::new();
                 fs::File::open(
                     get_home() + "/.config/raven/themes/" + theme_name + "/theme.json",
-                    ).expect("Couldn't read theme")
+                ).expect("Couldn't read theme")
                     .read_to_string(&mut theme)
                     .unwrap();
                 let theme_info: ThemeStore = serde_json::from_str(&theme).unwrap();

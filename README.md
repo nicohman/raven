@@ -44,7 +44,7 @@ The following packages are required for their relevant options:
 
 + [Bspwm](https://github.com/baskerville/bspwm) : `bspwm`
 
-+ [Rofi](https://github.com/DaveDavenport/rofi) is used in the default config and is recommended.
++ [Rofi](https://github.com/DaveDavenport/rofi) is used in the default config and is recommended. You can also add a custom rofi theme with the `rofi` option.
 
 * New option suggestions are very welcome!
 
