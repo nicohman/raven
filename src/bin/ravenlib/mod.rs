@@ -95,12 +95,19 @@ pub mod rlib {
                     .read_to_string(&mut pre)
                     .unwrap();
                 let mut finals = String::new();
+                let mut end = false;
                 for  line in pre.lines() {
-                    if !line.contains("theme") && line.len() > 1{
+                    if line.trim() == "}" {
+                        end = true;
+                    }
+                    if !line.contains("theme") && line.len() > 0{
                         finals = finals + &line.trim()+"\n";
                     }
                 }
-                pre = finals+  "\n" + &conf;
+                pre = finals+  "\n" + &conf+"\n";
+                if end {
+                    pre = pre +"\n}";
+                }
                 OpenOptions::new()
                     .create(true)
                     .write(true)

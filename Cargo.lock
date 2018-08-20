@@ -754,7 +754,7 @@ dependencies = [
 
 [[package]]
 name = "raventhemer"
-version = "1.4.0"
+version = "1.4.1"
 dependencies = [
  "hyper 0.10.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "multipart 0.15.2 (registry+https://github.com/rust-lang/crates.io-index)",
