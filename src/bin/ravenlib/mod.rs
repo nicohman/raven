@@ -2,6 +2,7 @@
 pub mod rlib {
     use std::fs;
     use std::fs::{OpenOptions, DirEntry};
+    use std::os::unix::fs::OpenOptionsExt;
     use std::io::Read;
     use std::env;
     use std::io::Write;
@@ -184,13 +185,18 @@ pub mod rlib {
             OpenOptions::new()
                 .create(true)
                 .write(true)
+                .mode(0o744)
                 .open(get_home() + "/.config/bspwm/bspwmrc")
                 .expect("Couldn't open bspwmrc file")
                 .write_all(config.as_bytes())
                 .unwrap();
-            Command::new("bspc").arg("reload").output().expect(
-                "Couldn't reload bspwm",
-            );
+            Command::new("sh")
+                .arg("-c")
+                .arg(
+                    get_home() + "/.config/bspwm/bspwmrc",
+                )
+                .output()
+                .expect("Couldn't reload bspwm");
         }
         pub fn load_i3(&self, isw: bool) {
             let mut config = String::new();
