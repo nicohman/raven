@@ -83,49 +83,15 @@ pub mod rlib {
 
         }
         pub fn load_rofi(&self) {
-            let conf = "rofi.theme: ".to_string() + &get_home() + "/.config/raven/themes/" +
-                &self.name + "/rofi";
+
             let mut pre = String::new();
             if fs::metadata(get_home() + "/.config/rofi").is_err() {
                 fs::create_dir(get_home() + "/.config/rofi").unwrap();
             }
-            if fs::metadata(get_home() + "/.config/rofi/config").is_ok() {
-                fs::File::open(get_home() + "/.config/rofi/config")
-                    .expect("Couldn't open rofi config")
-                    .read_to_string(&mut pre)
-                    .unwrap();
-                let mut finals = String::new();
-                let mut end = false;
-                for  line in pre.lines() {
-                    if line.trim() == "}" {
-                        end = true;
-                    }
-                    if !line.contains("theme") && line.len() > 0{
-                        finals = finals + &line.trim()+"\n";
-                    }
-                }
-                pre = finals+  "\n" + &conf+"\n";
-                if end {
-                    pre = pre +"\n}";
-                }
-                OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .open(get_home() + "/.config/rofi/config")
-                    .expect("Couldn't open rofi config")
-                    .write_all(pre.as_bytes())
-                    .unwrap();
-
-            } else {
-                OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .open(get_home() + "/.config/rofi/config")
-                    .expect("Couldn't open rofi config")
-                    .write_all(conf.as_bytes())
-                    .unwrap();
-
-            }
+            fs::copy(
+                get_home() + "/.config/raven/themes/" + &self.name + "/rofi",
+                get_home() + "/.config/rofi/theme.rasi",
+            ).expect("Couldn't copy rofi theme");
         }
         pub fn load_pywal(&self) {
             let arg = get_home() + "/.config/raven/themes/" + &self.name + "/pywal";
@@ -183,10 +149,19 @@ pub mod rlib {
         }
 
         pub fn load_ncm(&self) {
-            fs::copy(
-                get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
-                get_home() + "/.ncmpcpp/config",
-            ).expect("Couldn't overwrite ncmpcpp config");
+            if fs::metadata(get_home() + "/.config/ncmpcpp").is_ok() {
+                fs::copy(
+                    get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
+                    get_home() + "/.config/ncmpcpp/config",
+                ).expect("Couldn't overwrite ncmpcpp config");
+            } else if fs::metadata(get_home() + "/.ncmpcpp").is_ok() {
+                fs::copy(
+                    get_home() + "/.config/raven/themes/" + &self.name + "/ncmpcpp",
+                    get_home() + "/.ncmpcpp/config",
+                ).expect("Couldn't overwrite ncmpcpp config");
+            } else {
+                println!("Couldn't detect a ncmpcpp config directory in ~/.config/ncmppcp or ~/.ncmpcpp.");
+            }
 
         }
         pub fn load_bspwm(&self) {
