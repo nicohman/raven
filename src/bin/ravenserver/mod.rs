@@ -8,6 +8,7 @@ pub mod ravens {
     use std::io::Write;
     use tar::{Archive, Builder};
     use reqwest;
+    use ravenlib::rlib;
     fn get_home() -> String {
         return String::from(env::home_dir().unwrap().to_str().unwrap());
     }
@@ -74,12 +75,16 @@ pub mod ravens {
             .expect("Couldn't delete user info file");
         println!("Successfully logged you out");
     }
+    pub fn get_host() -> String {
+        let conf = rlib::get_config();
+        conf.host
+    }
     pub fn delete_user(pass: String) {
         let info = load_info().unwrap();
         let client = reqwest::Client::new();
         let res = client
             .post(
-                &("https://demenses.net/themes/users/delete/".to_string() + &info.name +
+                &(get_host()+"/themes/users/delete/" + &info.name +
                       "?token=" + &info.token + "&pass=" + &pass),
             )
             .send();
@@ -111,7 +116,7 @@ pub mod ravens {
             let client = reqwest::Client::new();
             let res = client
                 .post(
-                    &("https://demenses.net/themes/user/create?name=".to_string() + &name +
+                    &(get_host()+"/themes/user/create?name=" + &name +
                           "&pass=" +
                           &pass),
                 )
@@ -149,7 +154,7 @@ pub mod ravens {
                     .unwrap();
                 let res = reqwest::Client::new()
                     .post(
-                        &("https://demenses.net/themes/upload?name=".to_string() + &name +
+                        &(get_host()+"/themes/upload?name=" + &name +
                               "&token=" +
                               &info.token),
                     )
@@ -190,7 +195,7 @@ pub mod ravens {
         let client = reqwest::Client::new();
         let res = client
             .post(
-                &("https://demenses.net/themes/meta/".to_string() + &name + "?typem=" +
+                &(get_host()+"/themes/meta/" + &name + "?typem=" +
                       &typem + "&value=" + &value + "&token=" + &info.token),
             )
             .send();
@@ -222,7 +227,7 @@ pub mod ravens {
         let res =
             client
                 .post(
-                    &("https://demenses.net/themes/delete/".to_string() + &name + "?token=" +
+                    &(get_host()+"/themes/delete/" + &name + "?token=" +
                           &info.token),
                 )
                 .send();
@@ -249,7 +254,7 @@ pub mod ravens {
     }
     pub fn install_warning(esp: bool) {
         println!(
-            "Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at http://demenses.net and it will be removed."
+            "Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at {} and it will be removed.", get_host()
         );
         if esp {
             println!(
@@ -261,7 +266,7 @@ pub mod ravens {
     pub fn download_theme(name: String) {
         let client = reqwest::Client::new();
         let res = client
-            .get(&("https://demenses.net/themes/repo/".to_string() + &name))
+            .get(&(get_host()+"/themes/repo/" + &name))
             .send();
         if res.is_ok() {
             let mut res = res.unwrap();
@@ -336,7 +341,7 @@ pub mod ravens {
         let res =
             client
                 .get(
-                    &("https://demenses.net/themes/user/login?name=".to_string() + &name +
+                    &(get_host()+"/themes/user/login?name=" + &name +
                           "&pass=" +
                           &pass),
                 )

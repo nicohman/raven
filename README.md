@@ -8,7 +8,7 @@ A theme manager for linux, currently focusing on i3. Supports multiple different
 
 ## ThemeHub
 
-Raven supports installing themes from and publishing themes to [ThemeHub](https://demenses.net). I encourage everyone to share their themes and rices there!
+Raven supports installing themes from and publishing themes to [ThemeHub](https://demenses.net), or your own instance of [ravenserver](https://github.com/nicohman/ravenserver). I encourage everyone to share their themes and rices there!
 
 ## Installation
 All you technically require is [cargo](https://github.com/rust-lang/cargo) to be installed.
@@ -87,6 +87,7 @@ monitors : The number of monitors currently in use
 menu_command: A command that, when raven menu is run, will be piped a list of theme names through STDIN and expects a theme name from STDOUT
 last: The last theme raven loaded
 editing: The theme you are currently editing
+host: The URL of the ravenserver host to use. By default, [https://demenses.net](https://demenses.net)
 ```
 
 To configure a theme, start off by creating it with `raven new [theme]`. You'll automatically start editing that theme. Run `raven add [option] [file]` to add a specific option. This will copy the indicated file to raven's registry, and run/reload/copy it when the edited theme is loaded or refreshed. Run `raven rm [option]` to remove an option from a theme. Available options are:
@@ -110,8 +111,8 @@ If you place an i3 config named base\_i3 in ~/.config/raven, the contents of i3 
 The lemonbar option should be a shell script that runs lemonbar(s). They will automatically be killed just like polybars when the theme is changed or reloaded.
 
 ### Polybar bar names
-As many polybars as you have monitors will be started. The names of the bars themselves should be configured in `config.json`. The default is ["main", "other"]. If yu're sharing your themes with others, it is recommended that you leave the polybar monitor name blank, so that it automatically adapts to other monitor names.
+As many polybars as you have monitors will be started. The names of the bars themselves should be configured in `config.json`. The default is ["main", "other"]. If you're sharing your themes with others, it is recommended that you leave the polybar monitor name blank, so that it automatically adapts to other monitor names.
 
 ### Cycle themes
 
-With the cycle command you can control a daemon that will automatically cycle through all of your configured themes. You need to edit `~/.config/raven/time` and place the number of seconds there should be inbetween each cycle into that file in order to use it.
+With the cycle command you can control a daemon that will automatically cycle through all of your configured themes. You need to edit `~/.config/raven/time` and place the number of seconds there should be between each cycle into that file in order to use it.

@@ -12,6 +12,9 @@ pub mod rlib {
     fn get_home() -> String {
         return String::from(env::home_dir().unwrap().to_str().unwrap());
     }
+    fn default_host() -> String {
+        String::from("https://demenses.net")
+    }
     #[derive(Serialize, Deserialize, Debug)]
     pub struct ThemeStore {
         pub name: String,
@@ -34,6 +37,8 @@ pub mod rlib {
         pub menu_command: String,
         pub last: String,
         pub editing: String,
+        #[serde(default = "default_host")]
+        pub host: String
     }
 
 
@@ -45,6 +50,7 @@ pub mod rlib {
                 menu_command: "rofi -theme sidebar -mesg 'raven:' -p '> ' -dmenu".to_string(),
                 last: "".to_string(),
                 editing: "".to_string(),
+                host: "https://demenses.net".to_string(),
             }
         }
     }
