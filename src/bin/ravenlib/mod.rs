@@ -9,12 +9,14 @@ pub mod rlib {
     use serde_json;
     use std::process::Command;
     use std::io;
+    //Returns home directory as string
     fn get_home() -> String {
         return String::from(env::home_dir().unwrap().to_str().unwrap());
     }
     fn default_host() -> String {
         String::from("https://demenses.net")
     }
+    //Structure for holding theme info, stored in theme.json
     #[derive(Serialize, Deserialize, Debug)]
     pub struct ThemeStore {
         pub name: String,
@@ -38,10 +40,10 @@ pub mod rlib {
         pub last: String,
         pub editing: String,
         #[serde(default = "default_host")]
-        pub host: String
+        pub host: String,
     }
 
-
+    
     impl Config {
         pub fn default() -> Config {
             Config {
@@ -54,7 +56,9 @@ pub mod rlib {
             }
         }
     }
+    // Methods for a loaded theme
     impl Theme {
+        //Iterates through options and loads them with submethods
         pub fn load_all(&self) {
             let opt = &self.options;
             let mut i = 1;
@@ -90,7 +94,6 @@ pub mod rlib {
 
         }
         pub fn load_rofi(&self) {
-
             let mut pre = String::new();
             if fs::metadata(get_home() + "/.config/rofi").is_err() {
                 fs::create_dir(get_home() + "/.config/rofi").unwrap();
@@ -291,6 +294,7 @@ pub mod rlib {
 
         }
     }
+    //Checks to see if base config/directories need to be initialized
     pub fn check_init() -> bool {
         if fs::metadata(get_home() + "/.config/raven").is_err() ||
             fs::metadata(get_home() + "/.config/raven/config.json").is_err() ||
@@ -301,6 +305,7 @@ pub mod rlib {
             false
         }
     }
+    //Check to see if there are themes still using the old format
     pub fn check_themes() {
         let entries = fs::read_dir(get_home() + "/.config/raven/themes").unwrap();
         for entry in entries {
@@ -329,6 +334,7 @@ pub mod rlib {
         file.write_all(default.as_bytes()).unwrap();
         println!("Correctly initialized base config. Please run again to use raven.");
     }
+    //Start ravend
     pub fn start_daemon() {
         Command::new("sh").arg("-c").arg("ravend").spawn().expect(
             "Couldn't start daemon.",

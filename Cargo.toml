@@ -1,7 +1,7 @@
 [package]
 name = "raventhemer"
-version = "1.4.1"
-authors = ["nicohman <nico.hickman@gmail.com>"]
+version = "1.4.2"
+authors = ["nicohman <nicohman@demenses.net>"]
 repository="https://github.com/nicohman/raven"
 description="A theme manager and switcher for desktop linux"
 readme="README.md"
@@ -17,3 +17,4 @@ tar = "0.4"
 hyper = "0.10.13"
 reqwest = "0.8.7"
 multipart = "0.15.2"
+structopt = "0.2.10"

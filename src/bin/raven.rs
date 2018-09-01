@@ -15,6 +15,98 @@ use ravenlib::rlib;
 use ravenserver::ravens;
 extern crate hyper;
 extern crate reqwest;
+#[macro_use]
+extern crate structopt;
+use structopt::StructOpt;
+#[derive(StructOpt, Debug)]
+#[structopt(name = "raven")]
+enum Raven {
+    #[structopt(name= "load", about = "Load a complete theme")]
+    Load {
+        theme:String
+    },
+    #[structopt(name = "new", about = "Create a new theme")]
+    New {
+        name:String
+    },
+    #[structopt(name = "modify", about = "Open the currently edited themes's option in $EDITOR")]    
+    Modify {
+        name:String
+    },
+    #[structopt(name = "delete", about = "Delete a theme")]        
+    Delete {
+        name:String
+    },
+    #[structopt(name = "info", about = "Print info about the theme being currently edited")]        
+    Info {
+    },
+    #[structopt(name = "refresh", about = "Load last loaded theme")]        
+    Refresh {
+    },
+    #[structopt(name = "install", about = "Install a theme from ThemeHub repo")]        
+    Install {
+        name:String
+    },
+    #[structopt(name = "add", about = "Add option to current theme")]        
+    Add {
+        option:String,
+        name:String
+    },
+    #[structopt(name = "rm", about = "Remove an option from edited theme")]        
+    Rm {
+        name:String
+    },
+     #[structopt(name = "edit", about = "Edit theme")]        
+    Edit {
+        name:String
+    },
+    #[structopt(name = "menu", about = "Show theme menu")]        
+    Menu {
+    
+    },
+
+}
+#[derive(StructOpt, Debug)]
+enum Manage {
+     #[structopt(name = "export", about = "Export a theme to a tarball")]        
+    Export {
+        name:String
+    },
+    #[structopt(name = "import", about = "Import a theme from a tarball")]        
+    Import {
+        name:String
+    },
+    #[structopt(name = "publish", about = "Publish an account online")]        
+    Publish {
+        name:String
+    },
+    #[structopt(name = "create", about = "Create an account")]        
+    Create {
+        name:String,
+        pass1:String,
+        pass2:String
+    },
+    #[structopt(name = "meta", about = "Edit an online theme's metadata")]        
+    Meta {
+        name:String,
+        mtype:String,
+        value:String
+    },
+    #[structopt(name = "delete_user", about = "Delete an online user's profile and owned themes")]            
+    DUser {
+        pass:String
+    },
+    #[structopt(name = "logout", about = "Log out of your user profile")]            
+    Logout {
+        
+    },
+    #[structopt(name = "unpublish", about = "Delete an online theme")]            
+    Unpublish {
+        name:String
+    }
+
+  
+}
 //Structure that holds theme data, to be stored in a theme folder.
 fn main() {
     if rlib::check_init() {
@@ -25,44 +117,33 @@ fn main() {
 }
 fn interpet_args() {
     //Interpet arguments and check for a need to run init()
+        let r = Raven::from_args();
 
+        println!("{:?}",r);
         rlib::check_themes();
-        let args: Vec<String> = env::args().collect();
-        let command: &str;
-        if args.len() < 2 {
-            command = "help";
-        } else {
-            command = &args[1];
-        }
-        let conf = rlib::get_config();
-        let cmd = command.as_ref();
-        if args.len() > 1 {
-            if !check_args_cmd(args.len() - 2, cmd) {
-                println!("Not enough arguments for {}", &cmd);
-                ::std::process::exit(64);
-            }
-        }
-
         //If a theme may be changing, kill the previous theme's processes. Currently only polybar
         //and lemonbar
-        if cmd == "load" || cmd == "refresh" {
-            rlib::clear_prev();
-        }
-        match cmd {
-            "load" => rlib::run_theme(rlib::load_theme(&args[2]).unwrap()),
-            "new" => rlib::new_theme(&args[2]),
-            "help" => print_help(),
-            "modify" => modify_file(conf.editing, &args[2]),
-            "delete" => rlib::del_theme(&args[2]),
-            "edit" => rlib::edit(&args[2]),
-            "cycle" => manage_daemon(&args[2]),
-            "info" => print_info(conf.editing),
-            "manage" => process_manage_args(args.clone()),
-            "refresh" => rlib::refresh_theme(conf.last),
-            "install" => ravens::download_theme((&args[2]).to_string()),
-            "add" => rlib::add_to_theme(&conf.editing, &args[2], &args[3]),
-            "rm" => rlib::rm_from_theme(&conf.editing, &args[2]),
-            "menu" => show_menu(conf.menu_command),
+        let conf = rlib::get_config();
+        match r {
+            Raven::Load{ theme } => {
+                rlib::clear_prev();
+                rlib::run_theme(rlib::load_theme(&theme).unwrap());
+            },
+            Raven::New{ name } => rlib::new_theme(&name),
+            Raven::Modify{ name }  => modify_file(conf.editing,&name),
+            Raven::Delete{ name }  => rlib::del_theme(&name),
+            Raven::Edit{ name }  => rlib::edit(&name),
+            // => manage_daemon(&args[2]),
+            Raven::Info{ } => print_info(conf.editing),
+          //  "manage" => process_manage_args(args.clone()),
+            Raven::Refresh{ }  => {
+                rlib::clear_prev();
+                rlib::refresh_theme(conf.last);
+            },
+            Raven::Install{ name }  => ravens::download_theme(name),
+            Raven::Add{ name, option }  => rlib::add_to_theme(&conf.editing, &option, &name),
+            Raven::Rm{ name }  => rlib::rm_from_theme(&conf.editing, &name),
+            Raven::Menu{ }  => show_menu(conf.menu_command),
             _ => println!("Unknown command. raven help for commands."),
         }
 
