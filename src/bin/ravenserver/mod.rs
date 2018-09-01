@@ -84,8 +84,8 @@ pub mod ravens {
         let client = reqwest::Client::new();
         let res = client
             .post(
-                &(get_host()+"/themes/users/delete/" + &info.name +
-                      "?token=" + &info.token + "&pass=" + &pass),
+                &(get_host() + "/themes/users/delete/" + &info.name + "?token=" + &info.token +
+                      "&pass=" + &pass),
             )
             .send();
         if res.is_ok() {
@@ -98,7 +98,8 @@ pub mod ravens {
                     println!("You are trying to delete a user you are not. Bad!");
                 } else if res.status() == reqwest::StatusCode::Unauthorized {
                     println!(
-                        "You're trying to delete a user w/o providing authentication credentials");
+                        "You're trying to delete a user w/o providing authentication credentials"
+                    );
                 } else if res.status() == reqwest::StatusCode::NotFound {
                     println!("You're trying to delete a user that doesn't exist");
                 } else {
@@ -116,15 +117,15 @@ pub mod ravens {
             let client = reqwest::Client::new();
             let res = client
                 .post(
-                    &(get_host()+"/themes/user/create?name=" + &name +
-                          "&pass=" +
-                          &pass),
+                    &(get_host() + "/themes/user/create?name=" + &name + "&pass=" + &pass),
                 )
                 .send();
             if res.is_ok() {
                 let res = res.unwrap();
                 if res.status().is_success() {
-                    println!("Successfully created user. Sign in with `raven login [name] [password]`");
+                    println!(
+                        "Successfully created user. Sign in with `raven login [name] [password]`"
+                    );
                 } else {
                     if res.status() == reqwest::StatusCode::Forbidden {
                         println!("User already created. Pick a different name!");
@@ -154,9 +155,7 @@ pub mod ravens {
                     .unwrap();
                 let res = reqwest::Client::new()
                     .post(
-                        &(get_host()+"/themes/upload?name=" + &name +
-                              "&token=" +
-                              &info.token),
+                        &(get_host() + "/themes/upload?name=" + &name + "&token=" + &info.token),
                     )
                     .multipart(form)
                     .send();
@@ -184,7 +183,9 @@ pub mod ravens {
 
                 }
             } else {
-                println!("Something has gone wrong. Check if the theme file was written to current directory.");
+                println!(
+                    "Something has gone wrong. Check if the theme file was written to current directory."
+                );
             }
         } else {
             println!("That theme does not exist");
@@ -195,8 +196,8 @@ pub mod ravens {
         let client = reqwest::Client::new();
         let res = client
             .post(
-                &(get_host()+"/themes/meta/" + &name + "?typem=" +
-                      &typem + "&value=" + &value + "&token=" + &info.token),
+                &(get_host() + "/themes/meta/" + &name + "?typem=" + &typem + "&value=" + &value +
+                      "&token=" + &info.token),
             )
             .send();
         if res.is_ok() {
@@ -224,13 +225,11 @@ pub mod ravens {
     pub fn unpublish_theme(name: String) {
         let info = load_info().unwrap();
         let client = reqwest::Client::new();
-        let res =
-            client
-                .post(
-                    &(get_host()+"/themes/delete/" + &name + "?token=" +
-                          &info.token),
-                )
-                .send();
+        let res = client
+            .post(
+                &(get_host() + "/themes/delete/" + &name + "?token=" + &info.token),
+            )
+            .send();
         if res.is_ok() {
             let res = res.unwrap();
             if res.status().is_success() {
@@ -254,7 +253,8 @@ pub mod ravens {
     }
     pub fn install_warning(esp: bool) {
         println!(
-            "Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at {} and it will be removed.", get_host()
+            "Warning: When you install themes from the online repo, there is some danger. Please evaluate the theme files before loading the theme, and if you find any malicious theme, please report it on the theme's page at {} and it will be removed.",
+            get_host()
         );
         if esp {
             println!(
@@ -265,9 +265,7 @@ pub mod ravens {
     }
     pub fn download_theme(name: String) {
         let client = reqwest::Client::new();
-        let res = client
-            .get(&(get_host()+"/themes/repo/" + &name))
-            .send();
+        let res = client.get(&(get_host() + "/themes/repo/" + &name)).send();
         if res.is_ok() {
             let mut res = res.unwrap();
             if res.status().is_success() {
@@ -338,14 +336,11 @@ pub mod ravens {
     }
     pub fn login_user(name: String, pass: String) {
         let client = reqwest::Client::new();
-        let res =
-            client
-                .get(
-                    &(get_host()+"/themes/user/login?name=" + &name +
-                          "&pass=" +
-                          &pass),
-                )
-                .send();
+        let res = client
+            .get(
+                &(get_host() + "/themes/user/login?name=" + &name + "&pass=" + &pass),
+            )
+            .send();
         if res.is_ok() {
             let mut res = res.unwrap();
             if res.status().is_success() {

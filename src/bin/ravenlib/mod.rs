@@ -43,7 +43,7 @@ pub mod rlib {
         pub host: String,
     }
 
-    
+
     impl Config {
         pub fn default() -> Config {
             Config {
@@ -170,7 +170,9 @@ pub mod rlib {
                     get_home() + "/.ncmpcpp/config",
                 ).expect("Couldn't overwrite ncmpcpp config");
             } else {
-                println!("Couldn't detect a ncmpcpp config directory in ~/.config/ncmppcp or ~/.ncmpcpp.");
+                println!(
+                    "Couldn't detect a ncmpcpp config directory in ~/.config/ncmppcp or ~/.ncmpcpp."
+                );
             }
 
         }
@@ -201,9 +203,7 @@ pub mod rlib {
                 .unwrap();
             Command::new("sh")
                 .arg("-c")
-                .arg(
-                    get_home() + "/.config/bspwm/bspwmrc",
-                )
+                .arg(get_home() + "/.config/bspwm/bspwmrc")
                 .output()
                 .expect("Couldn't reload bspwm");
         }
