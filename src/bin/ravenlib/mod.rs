@@ -94,7 +94,6 @@ pub mod rlib {
 
         }
         pub fn load_rofi(&self) {
-            let mut pre = String::new();
             if fs::metadata(get_home() + "/.config/rofi").is_err() {
                 fs::create_dir(get_home() + "/.config/rofi").unwrap();
             }

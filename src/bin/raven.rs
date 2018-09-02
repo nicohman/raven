@@ -34,7 +34,6 @@ fn interpet_args() {
     use Raven::*;
     use Manage::*;
     use Cycle::*;
-    println!("{:?}", r);
     check_themes();
     //If a theme may be changing, kill the previous theme's processes. Currently only polybar
     //and lemonbar
@@ -49,7 +48,6 @@ fn interpet_args() {
         Delete { name } => del_theme(&name),
         Edit { name } => edit(&name),
         ManageO { .. } => {
-            println!("{:?}", r);
             match r {
                 ManageO(Export { name }) => export(&name),
                 ManageO(Import { name }) => import(&name),
@@ -72,21 +70,21 @@ fn interpet_args() {
                     } else {
                         println!("Cycle daemon not running.");
                     }
-                },
+                }
                 CycleD(Start {}) => {
                     if !running {
                         start_daemon();
                     } else {
                         println!("Cycle daemon already running.");
                     }
-                },
+                }
                 CycleD(Stop {}) => {
                     if running {
                         stop_daemon();
                     } else {
                         println!("Cycle daemon not running.");
                     }
-                },
+                }
                 _ => {
                     println!("Not a possible command.");
                 }
@@ -97,11 +95,10 @@ fn interpet_args() {
             clear_prev();
             refresh_theme(conf.last);
         }
-        Install { name } => download_theme(name),
+        Install { name, force } => download_theme(name, force),
         Add { name, option } => add_to_theme(&conf.editing, &option, &name),
         Rm { name } => rm_from_theme(&conf.editing, &name),
-        Menu {} => show_menu(conf.menu_command),
-        _ => println!("Unknown command. raven help for commands."),
+        Menu {} => show_menu(conf.menu_command)
     }
 
 }
@@ -118,8 +115,19 @@ fn print_info(editing: String) {
     for option in options {
         println!("{}", option);
     }
+    println!("All themes: ");
+    let themes = fs::read_dir(get_home() + "/.config/raven/themes")
+        .expect("Couldn't read themes")
+        .collect::<Vec<io::Result<DirEntry>>>()
+        .into_iter()
+        .map(|x| proc_path(x.unwrap()))
+        .collect::<Vec<String>>();
+    for t in themes {
+        println!("{}", t);
+    }
 }
 fn modify_file(editing: String, file: &str) {
+    //Pulls $EDITOR from environment variables
     let editor = env::var_os("EDITOR").expect("Could not fetch $EDITOR from OS");
     let path = get_home() + "/.config/raven/themes/" + &editing + "/" + file;
     println!("Started {:?} at {}", editor, path);

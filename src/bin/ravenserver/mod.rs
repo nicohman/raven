@@ -263,7 +263,7 @@ pub mod ravens {
         }
         println!("Thank you for helping keep the repo clean!");
     }
-    pub fn download_theme(name: String) {
+    pub fn download_theme(name: String, force: bool) {
         let client = reqwest::Client::new();
         let res = client.get(&(get_host() + "/themes/repo/" + &name)).send();
         if res.is_ok() {
@@ -276,7 +276,7 @@ pub mod ravens {
                     .expect("Couldn't write theme file");
                 res.copy_to(&mut file).expect("Couldn't pipe to archive");
                 println!("Downloaded theme.");
-                if res.status() == reqwest::StatusCode::AlreadyReported {
+                if res.status() == reqwest::StatusCode::AlreadyReported && !force {
                     print!(
                         "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Are you sure you would like to continue? (y/n)"
                     );
@@ -298,15 +298,24 @@ pub mod ravens {
                                 get_home() + "/.config/raven/themes/" + &name + "/lemonbar",
                             ).is_ok()
                         {
-                            install_warning(true);
+                            if !force {
+                                install_warning(true);
+                            }
                         } else {
-                            install_warning(false);
+                            if !force {
+                                install_warning(false);
+                            }
                         }
                     } else {
                         println!("Removing downloaded archive.");
                         fs::remove_file(name.clone() + ".tar").unwrap();
                     }
                 } else {
+                    if res.status() == reqwest::StatusCode::AlreadyReported {
+                        print!(
+                            "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Continuing because of --force."
+                        );
+                    }
                     import(&(name.clone() + ".tar"));
                     println!("Imported theme. Removing archive.");
                     fs::remove_file(name.clone() + ".tar").unwrap();
@@ -315,9 +324,13 @@ pub mod ravens {
                         fs::metadata(get_home() + "/.config/raven/themes/" + &name + "/lemonbar")
                             .is_ok()
                     {
-                        install_warning(true);
+                        if !force {
+                            install_warning(true);
+                        }
                     } else {
-                        install_warning(false);
+                        if !force {
+                            install_warning(false);
+                        }
                     }
 
                 }
