@@ -44,7 +44,7 @@ fn interpet_args() {
             run_theme(load_theme(&theme).unwrap());
         }
         New { name } => new_theme(&name),
-        Modify { name } => modify_file(conf.editing, &name),
+        Modify { name, editor } => modify_file(conf.editing, &name, editor),
         Delete { name } => del_theme(&name),
         Edit { name } => edit(&name),
         ManageO { .. } => {
@@ -98,7 +98,7 @@ fn interpet_args() {
         Install { name, force } => download_theme(name, force),
         Add { name, option } => add_to_theme(&conf.editing, &option, &name),
         Rm { name } => rm_from_theme(&conf.editing, &name),
-        Menu {} => show_menu(conf.menu_command)
+        Menu {} => show_menu(conf.menu_command),
     }
 
 }
@@ -126,9 +126,16 @@ fn print_info(editing: String) {
         println!("{}", t);
     }
 }
-fn modify_file(editing: String, file: &str) {
+fn modify_file(editing: String, file: &str, editor: Option<String>) {
     //Pulls $EDITOR from environment variables
-    let editor = env::var_os("EDITOR").expect("Could not fetch $EDITOR from OS");
+    if editor.is_none() {
+        let editor = env::var_os("EDITOR");
+        if editor.is_none() {
+            println!("Could not fetch $EDITOR from your OS.");
+            std::process::exit(64);
+        }
+    }
+    let editor = editor.unwrap();
     let path = get_home() + "/.config/raven/themes/" + &editing + "/" + file;
     println!("Started {:?} at {}", editor, path);
     Command::new(editor).arg(path).spawn().expect(

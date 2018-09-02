@@ -9,7 +9,12 @@ pub mod rargs {
         New { name: String },
         #[structopt(name = "modify",
                     about = "Open the currently edited themes's option in $EDITOR")]
-        Modify { name: String },
+        Modify {
+            /// Use custom editor
+            #[structopt(short = "e", long = "editor")]
+            editor: Option<String>,
+            name: String,
+        },
         #[structopt(name = "delete", about = "Delete a theme")]
         Delete { name: String },
         #[structopt(name = "info", about = "Print info about the theme being currently edited")]
@@ -17,7 +22,12 @@ pub mod rargs {
         #[structopt(name = "refresh", about = "Load last loaded theme")]
         Refresh {},
         #[structopt(name = "install", about = "Install a theme from ThemeHub repo")]
-        Install { name: String },
+        Install {
+            name: String,
+            /// Don't prompt for confirmation
+            #[structopt(short = "f", long = "force")]
+            force: bool,
+        },
         #[structopt(name = "add", about = "Add option to current theme")]
         Add { option: String, name: String },
         #[structopt(name = "rm", about = "Remove an option from edited theme")]
