@@ -788,7 +788,6 @@ dependencies = [
 name = "raventhemer"
 version = "1.4.3"
 dependencies = [
- "hyper 0.10.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "multipart 0.15.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.8.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",

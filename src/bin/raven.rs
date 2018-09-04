@@ -15,7 +15,6 @@ mod args;
 use args::rargs::*;
 use ravenlib::rlib::*;
 use ravenserver::ravens::*;
-extern crate hyper;
 extern crate reqwest;
 #[macro_use]
 extern crate structopt;
