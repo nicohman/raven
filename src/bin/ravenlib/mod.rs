@@ -81,6 +81,7 @@ pub mod rlib {
                     "ranger" => self.load_ranger(),
                     "lemonbar" => self.load_lemon(),
                     "openbox" => self.load_openbox(),
+                    "dunst" => self.load_dunst(),
                     "|" => {}
                     _ => println!("Unknown option"),
                 };
@@ -155,6 +156,34 @@ pub mod rlib {
                 get_home() + "/.config/raven/themes/" + &self.name + "/ranger",
                 get_home() + "/.config/ranger/rc.conf",
             ).expect("Couldn't overwrite ranger config");
+        }
+
+        pub fn load_dunst(&self) {
+            let mut config = String::new();
+            if fs::metadata(get_home() + "/.config/raven/base_dunst").is_ok() {
+                fs::File::open(get_home() + "/.config/raven/base_dunst")
+                    .unwrap()
+                    .read_to_string(&mut config)
+                    .unwrap();
+            }
+            let mut app = String::new();
+            fs::File::open(
+                get_home() + "/.config/raven/themes/" + &self.name + "/dunst",
+            ).unwrap()
+                .read_to_string(&mut app)
+                .unwrap();
+            config.push_str(&app);
+            fs::remove_file(get_home() + "/.config/dunst/dunstrc").unwrap();
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(get_home() + "/.config/dunst/dunstrc")
+                .expect("Couldn't open dunstrc")
+                .write_all(config.as_bytes())
+                .unwrap();
+            Command::new("dunst")
+                .spawn()
+                .expect("Failed to run dunst");
         }
 
         pub fn load_ncm(&self) {
@@ -371,6 +400,7 @@ pub mod rlib {
     pub fn clear_prev() {
         Command::new("pkill").arg("polybar").output().unwrap();
         Command::new("pkill").arg("lemonbar").output().unwrap();
+        Command::new("pkill").arg("dunst").output().unwrap();
     }
     pub fn del_theme(theme_name: &str) {
         fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
