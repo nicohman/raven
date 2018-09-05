@@ -53,30 +53,34 @@ You can also download a prebuilt binary from [here](https://github.com/nicohman/
 ## Usage
 
 `raven help` for a list of available commands:
-```Commands:
-help : show this screen
-load [theme] : load a complete theme
-new [theme] : create a new theme
-delete [theme] : delete a theme
-refresh : load last loaded theme
-edit [theme] : initialize editing [theme]
-modify [option] : open the currently edited themes's [option] in $EDITOR
-add [option] [file] : add option to current theme
-rm [option] : remove option from current theme
-cycle {check|start|stop} : manage theme cycling daemon
-info : print info about the theme being currently edited
-menu : show theme menu
-install [name] : try to install a theme from the online repo
-manage [subcommand] : manage online theme publishing with subcommands
-      - import [archive] : import an exported theme
-      - export [theme] : export target theme to a tarball
-      - create [username] [password] [repeat password] : create a new user
-      - unpublish [name] : delete a published theme from repo
-      - login [username] [password] : login to a user profile
-      - publish [theme] : when logged in, publish a theme online
-      - logout : logout of a user profile
-      - meta [theme] [type] [value] : update the metadata of a published theme, either `screen`(a url to a screenshot) or `description`
-      - delete_user [password] : delete your user profile and any owned themes.
+
+```
+raven 
+nicohman <nicohman@demenses.net>
+A theme manager and switcher for desktop linux
+
+USAGE:
+    raven <SUBCOMMAND>
+
+FLAGS:
+    -h, --help       Prints help information
+    -V, --version    Prints version information
+
+SUBCOMMANDS:
+    add        Add option to current theme
+    cycle      Control cycle daemon
+    delete     Delete a theme
+    edit       Edit theme
+    help       Prints this message or the help of the given subcommand(s)
+    info       Print info about the theme being currently edited
+    install    Install a theme from ThemeHub repo
+    load       Load a complete theme
+    manage     Manage online themes
+    menu       Show theme menu
+    modify     Open the currently edited themes's option in $EDITOR
+    new        Create a new theme
+    refresh    Load last loaded theme
+    rm         Remove an option from edited theme
 ```
 
 ## Configuration
