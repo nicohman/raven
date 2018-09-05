@@ -47,6 +47,8 @@ The following packages are required for their relevant options:
 
 + [Openbox](https://github.com/danakj/openbox) : `openbox`
 
++ [Dunst](https://github.com/dunst-project/dunst) : `dunst`
+
 * New option suggestions are very welcome!
 
 You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
@@ -110,6 +112,7 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 + ranger (rc.conf)
 + lemonbar (A shell script that should spawn your lemonbar)
 + openbox [base_rc.xml] (rc.xml)
++ dunst [base_dunst] (dunstrc)
 
 base_ files allow splitting the config from the cosmetics on the options with [base_]
 For example if you place an i3 config named base_i3 in ~/.config/raven, the contents of i3 for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme.
