@@ -16,12 +16,22 @@ pub mod rlib {
     fn default_host() -> String {
         String::from("https://demenses.net")
     }
+    fn default_screen() -> String {
+        String::new()
+    }
+    fn default_desc() -> String {
+        String::from("A raven theme.")
+    }
     //Structure for holding theme info, stored in theme.json
     #[derive(Serialize, Deserialize, Debug)]
     pub struct ThemeStore {
         pub name: String,
         pub options: Vec<String>,
         pub enabled: Vec<String>,
+        #[serde(default = "default_screen")]        
+        pub screenshot: String,
+        #[serde(default = "default_desc")]        
+        pub description: String        
     }
     //Structure that holds all methods and data for individual themes.
     pub struct Theme {
@@ -429,10 +439,18 @@ pub mod rlib {
                 .create(true)
                 .write(true)
                 .open(
-                    get_home() + "/.config/raven/themes/" + &theme_name + "/theme",
+                    get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json",
                 )
                 .expect("can open");
-            file.write_all((String::from("|")).as_bytes()).unwrap();
+            let stdef = ThemeStore {
+                name: String::from(theme_name),
+                options:vec![],
+                enabled:vec![],
+                screenshot:default_screen(),
+                description:default_desc()
+            };
+            let st = serde_json::to_string(&stdef).unwrap();
+            file.write_all(st.as_bytes()).unwrap();
             edit(&theme_name);
         } else {
             println!("Theme {} already exists", &theme_name);
@@ -443,10 +461,13 @@ pub mod rlib {
     pub fn add_to_theme(theme_name: &str, option: &str, path: &str) {
         //Add an option to a theme
         let cur_theme = load_theme(theme_name).unwrap();
+        let cur_st = load_store(String::from(theme_name));
         let mut new_themes = ThemeStore {
             name: theme_name.to_string(),
             options: cur_theme.options,
             enabled: cur_theme.enabled,
+            screenshot:cur_st.screenshot,
+            description:cur_st.description
         };
         let mut already_used = false;
         for opt in &new_themes.options {
@@ -469,10 +490,13 @@ pub mod rlib {
     pub fn rm_from_theme(theme_name: &str, option: &str) {
         //Remove an option from a theme
         let cur_theme = load_theme(theme_name).unwrap();
+        let cur_st = load_store(String::from(theme_name));
         let mut new_themes = ThemeStore {
             name: theme_name.to_string(),
             options: cur_theme.options,
             enabled: cur_theme.enabled,
+            screenshot: cur_st.screenshot,
+            description:cur_st.description
         };
         let mut found = false;
         let mut i = 0;
@@ -542,6 +566,8 @@ pub mod rlib {
             name: theme_name.to_string(),
             enabled: Vec::new(),
             options: options,
+            screenshot:default_screen(),
+            description:default_desc()
         };
         fs::remove_file(
             get_home() + "/.config/raven/themes/" + theme_name + "/theme",
@@ -556,7 +582,12 @@ pub mod rlib {
             .write_all(serde_json::to_string(&themes).unwrap().as_bytes())
             .unwrap();
     }
-
+    pub fn load_store(theme:String) -> ThemeStore {
+        let mut st = String::new();
+        fs::File::open(get_home()+"/.config/raven/themes/"+&theme+"/theme.json").unwrap().read_to_string(&mut st).unwrap();
+        let thinf : ThemeStore = serde_json::from_str(&st).unwrap();
+        thinf
+    }
     pub fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
         //Load in data for and run loading methods for a specific theme
         let conf = get_config();
@@ -567,13 +598,7 @@ pub mod rlib {
                 get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json",
             ).is_ok()
             {
-                let mut theme = String::new();
-                fs::File::open(
-                    get_home() + "/.config/raven/themes/" + theme_name + "/theme.json",
-                ).expect("Couldn't read theme")
-                    .read_to_string(&mut theme)
-                    .unwrap();
-                let theme_info: ThemeStore = serde_json::from_str(&theme).unwrap();
+                let theme_info = load_store(String::from(theme_name));
                 let opts: Vec<String> = theme_info.options;
                 let new_theme = Theme {
                     name: String::from(theme_name),

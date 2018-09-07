@@ -19,9 +19,7 @@ Run:
 
 `git clone https://github.com/nicohman/raven.git && cd raven`
 
-`cargo build --release`
-
-`sudo cp targets/release/raven /usr/bin/raven`
+`cargo install --path . --force`
 
 The following packages are required for their relevant options:
 
