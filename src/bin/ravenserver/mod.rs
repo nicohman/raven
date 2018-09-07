@@ -17,6 +17,11 @@ pub mod ravens {
         name: String,
         token: String,
     }
+    #[derive(Serialize, Deserialize, Debug)]
+    pub struct MetaRes {
+        screen: String,
+        description: String,
+    }
     pub fn load_info() -> Result<UserInfo, String> {
         if fs::metadata(get_home() + "/.config/raven/ravenserver.json").is_ok() {
             let mut info = String::new();
@@ -168,6 +173,15 @@ pub mod ravens {
                         } else {
                             println!("Theme successfully updated.");
                         }
+                        let theme_st = rlib::load_store(name.clone());
+                        if theme_st.screenshot != rlib::default_screen() {
+                            pub_metadata(name.clone(), String::from("screen"), theme_st.screenshot);
+                        }
+                        pub_metadata(
+                            name.clone(),
+                            String::from("description"),
+                            theme_st.description,
+                        );
                         fs::remove_file(name + ".tar").unwrap();
                     } else {
                         if res.status() == reqwest::StatusCode::Forbidden {
@@ -189,6 +203,25 @@ pub mod ravens {
             }
         } else {
             println!("That theme does not exist");
+        }
+    }
+    pub fn get_metadata(name: String) -> Result<MetaRes, String> {
+        let client = reqwest::Client::new();
+        let res = client.get(&(get_host() + "/themes/meta/" + &name)).send();
+        if res.is_ok() {
+            let mut res = res.unwrap();
+            if res.status().is_success() {
+                let meta: MetaRes = res.json().expect("Couldn't deserialize metadata responnse");
+                Ok(meta)
+            } else {
+                if res.status() == reqwest::StatusCode::NotFound {
+                    Err("Theme not found".to_string())
+                } else {
+                    Err("Internal Server Error".to_string())
+                }
+            }
+        } else {
+            Err("Could not fetch metadata".to_string())
         }
     }
     pub fn pub_metadata(name: String, typem: String, value: String) {
@@ -291,6 +324,12 @@ pub mod ravens {
                         import(&(name.clone() + ".tar"));
                         println!("Imported theme. Removing archive.");
                         fs::remove_file(name.clone() + ".tar").unwrap();
+                        println!("Downloading metadata.");
+                        let meta = get_metadata(name.clone()).unwrap();
+                        let mut st = rlib::load_store(name.clone());
+                        st.screenshot = meta.screen;
+                        st.description = meta.description;
+                        rlib::up_theme(st);
                         if fs::metadata(
                             get_home() + "/.config/raven/themes/" + &name + "/script",
                         ).is_ok() ||
@@ -319,6 +358,12 @@ pub mod ravens {
                     import(&(name.clone() + ".tar"));
                     println!("Imported theme. Removing archive.");
                     fs::remove_file(name.clone() + ".tar").unwrap();
+                    println!("Downloading metadata.");
+                    let meta = get_metadata(name.clone()).unwrap();
+                    let mut st = rlib::load_store(name.clone());
+                    st.screenshot = meta.screen;
+                    st.description = meta.description;
+                    rlib::up_theme(st);
                     if fs::metadata(get_home() + "/.config/raven/themes/" + &name + "/script")
                         .is_ok() ||
                         fs::metadata(get_home() + "/.config/raven/themes/" + &name + "/lemonbar")

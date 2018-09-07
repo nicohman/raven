@@ -16,7 +16,7 @@ pub mod rlib {
     fn default_host() -> String {
         String::from("https://demenses.net")
     }
-    fn default_screen() -> String {
+    pub fn default_screen() -> String {
         String::new()
     }
     fn default_desc() -> String {
