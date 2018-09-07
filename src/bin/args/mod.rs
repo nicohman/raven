@@ -55,12 +55,6 @@ pub mod rargs {
             pass1: String,
             pass2: String,
         },
-        #[structopt(name = "meta", about = "Edit an online theme's metadata")]
-        Meta {
-            name: String,
-            mtype: String,
-            value: String,
-        },
         #[structopt(name = "delete_user",
                     about = "Delete an online user's profile and owned themes")]
         DUser { pass: String },

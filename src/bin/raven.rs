@@ -52,7 +52,6 @@ fn interpet_args() {
                 ManageO(Import { name }) => import(&name),
                 ManageO(Publish { name }) => upload_theme(name),
                 ManageO(Create { name, pass1, pass2 }) => create_user(name, pass1, pass2),
-                ManageO(Meta { name, mtype, value }) => pub_metadata(name, mtype, value),
                 ManageO(Unpublish { name }) => unpublish_theme(name),
                 ManageO(Login { name, pass }) => login_user(name, pass),
                 ManageO(Logout {}) => logout(),
