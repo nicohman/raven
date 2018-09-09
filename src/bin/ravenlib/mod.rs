@@ -264,7 +264,12 @@ pub mod rlib {
                     .unwrap();
             }
             config.push_str(&app);
-            fs::remove_file(get_home() + "/.config/i3/config").unwrap();
+            if fs::metadata(get_home()+"/.config/i3").is_err() {
+                fs::create_dir(get_home()+"/.config/i3").expect("Couldn't create i3 config dir");
+            }
+            if fs::metadata(get_home() + "/.config/i3/config").is_ok() {
+                fs::remove_file(get_home() + "/.config/i3/config").expect("Couldn't remove previous i3 config");
+            }
             OpenOptions::new()
                 .create(true)
                 .write(true)
