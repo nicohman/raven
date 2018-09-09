@@ -28,10 +28,10 @@ pub mod rlib {
         pub name: String,
         pub options: Vec<String>,
         pub enabled: Vec<String>,
-        #[serde(default = "default_screen")]        
+        #[serde(default = "default_screen")]
         pub screenshot: String,
-        #[serde(default = "default_desc")]        
-        pub description: String        
+        #[serde(default = "default_desc")]
+        pub description: String,
     }
     //Structure that holds all methods and data for individual themes.
     pub struct Theme {
@@ -191,9 +191,7 @@ pub mod rlib {
                 .expect("Couldn't open dunstrc")
                 .write_all(config.as_bytes())
                 .unwrap();
-            Command::new("dunst")
-                .spawn()
-                .expect("Failed to run dunst");
+            Command::new("dunst").spawn().expect("Failed to run dunst");
         }
 
         pub fn load_ncm(&self) {
@@ -345,9 +343,8 @@ pub mod rlib {
     }
     //Check to see if there are themes still using the old format
     pub fn check_themes() {
-        let entries = fs::read_dir(get_home() + "/.config/raven/themes").unwrap();
+        let entries = get_themes();
         for entry in entries {
-            let entry = proc_path(entry.unwrap());
             if fs::metadata(get_home() + "/.config/raven/themes/" + &entry + "/theme").is_ok() {
                 convert_theme(&entry);
             }
@@ -444,10 +441,10 @@ pub mod rlib {
                 .expect("can open");
             let stdef = ThemeStore {
                 name: String::from(theme_name),
-                options:vec![],
-                enabled:vec![],
-                screenshot:default_screen(),
-                description:default_desc()
+                options: vec![],
+                enabled: vec![],
+                screenshot: default_screen(),
+                description: default_desc(),
             };
             let st = serde_json::to_string(&stdef).unwrap();
             file.write_all(st.as_bytes()).unwrap();
@@ -466,8 +463,8 @@ pub mod rlib {
             name: theme_name.to_string(),
             options: cur_theme.options,
             enabled: cur_theme.enabled,
-            screenshot:cur_st.screenshot,
-            description:cur_st.description
+            screenshot: cur_st.screenshot,
+            description: cur_st.description,
         };
         let mut already_used = false;
         for opt in &new_themes.options {
@@ -496,7 +493,7 @@ pub mod rlib {
             options: cur_theme.options,
             enabled: cur_theme.enabled,
             screenshot: cur_st.screenshot,
-            description:cur_st.description
+            description: cur_st.description,
         };
         let mut found = false;
         let mut i = 0;
@@ -566,8 +563,8 @@ pub mod rlib {
             name: theme_name.to_string(),
             enabled: Vec::new(),
             options: options,
-            screenshot:default_screen(),
-            description:default_desc()
+            screenshot: default_screen(),
+            description: default_desc(),
         };
         fs::remove_file(
             get_home() + "/.config/raven/themes/" + theme_name + "/theme",
@@ -582,10 +579,14 @@ pub mod rlib {
             .write_all(serde_json::to_string(&themes).unwrap().as_bytes())
             .unwrap();
     }
-    pub fn load_store(theme:String) -> ThemeStore {
+    pub fn load_store(theme: String) -> ThemeStore {
         let mut st = String::new();
-        fs::File::open(get_home()+"/.config/raven/themes/"+&theme+"/theme.json").unwrap().read_to_string(&mut st).unwrap();
-        let thinf : ThemeStore = serde_json::from_str(&st).unwrap();
+        fs::File::open(
+            get_home() + "/.config/raven/themes/" + &theme + "/theme.json",
+        ).unwrap()
+            .read_to_string(&mut st)
+            .unwrap();
+        let thinf: ThemeStore = serde_json::from_str(&st).unwrap();
         thinf
     }
     pub fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
@@ -628,5 +629,14 @@ pub mod rlib {
             .unwrap();
         let config: Config = serde_json::from_str(&conf).expect("Couldn't read config file");
         config
+    }
+    pub fn get_themes() -> Vec<String> {
+        let mut entries = fs::read_dir(get_home() + "/.config/raven/themes")
+            .expect("Couldn't read themes")
+            .collect::<Vec<io::Result<DirEntry>>>()
+            .into_iter()
+            .map(|x| proc_path(x.unwrap()))
+            .collect::<Vec<String>>();
+        return entries;
     }
 }

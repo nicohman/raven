@@ -114,12 +114,7 @@ fn print_info(editing: String) {
         println!("{}", option);
     }
     println!("All themes: ");
-    let themes = fs::read_dir(get_home() + "/.config/raven/themes")
-        .expect("Couldn't read themes")
-        .collect::<Vec<io::Result<DirEntry>>>()
-        .into_iter()
-        .map(|x| proc_path(x.unwrap()))
-        .collect::<Vec<String>>();
+    let themes = get_themes(); 
     for t in themes {
         println!("{}", t);
     }
@@ -142,12 +137,7 @@ fn modify_file(editing: String, file: &str, editor: Option<String>) {
 }
 fn show_menu(menu_command: String) {
     let mut theme_list = String::new();
-    let mut entries = fs::read_dir(get_home() + "/.config/raven/themes")
-        .expect("Couldn't read themes")
-        .collect::<Vec<io::Result<DirEntry>>>()
-        .into_iter()
-        .map(|x| proc_path(x.unwrap()))
-        .collect::<Vec<String>>();
+    let mut entries = get_themes();
     entries.sort_by(|a, b| a.cmp(&b));
     let mut i = 0;
     for entry in entries {
