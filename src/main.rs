@@ -9,16 +9,16 @@ extern crate serde;
 extern crate serde_json;
 extern crate tar;
 extern crate multipart;
-mod ravenserver;
-mod ravenlib;
-mod args;
-use args::rargs::*;
-use ravenlib::rlib::*;
-use ravenserver::ravens::*;
 extern crate reqwest;
 #[macro_use]
 extern crate structopt;
 use structopt::StructOpt;
+pub mod ravenserver;
+pub mod ravenlib;
+pub mod args;
+use args::*;
+use ravenlib::*;
+use ravenserver::*;
 //Structure that holds theme data, to be stored in a theme folder.
 fn main() {
     if check_init() {
@@ -48,7 +48,7 @@ fn interpet_args() {
         Edit { name } => edit(&name),
         ManageO { .. } => {
             match r {
-                ManageO(Export { name }) => export(&name),
+                ManageO(Export { name }) => export(&name, check_tmp()),
                 ManageO(Import { name }) => import(&name),
                 ManageO(Publish { name }) => upload_theme(name),
                 ManageO(Create { name, pass1, pass2 }) => create_user(name, pass1, pass2),

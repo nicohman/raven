@@ -845,7 +845,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "raventhemer"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "multipart 0.15.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.2 (registry+https://github.com/rust-lang/crates.io-index)",

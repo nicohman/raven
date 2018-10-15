@@ -8,6 +8,7 @@ readme="README.md"
 keywords=["linux","cli","customization"]
 categories=["gui","command-line-interface"]
 license="GPL-3.0"
+
 [dependencies]
 time = "0.1"
 serde = "1.0.70"
