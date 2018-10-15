@@ -39,8 +39,13 @@ pub mod ravens {
             Err("Not logged in".to_string())
         }
     }
-    pub fn export(theme_name: &str) {
+    pub fn export(theme_name: &str, tmp:bool) -> String {
         if fs::metadata(get_home() + "/.config/raven/themes/" + theme_name).is_ok() {
+            let mut tname = String::new();
+            if tmp {
+                tname = tname +"/tmp/";
+            }
+            tname = tname + &theme_name.to_string() + ".tar";
             let tb = File::create(theme_name.to_string() + ".tar").unwrap();
             let mut b = Builder::new(tb);
             b.append_dir_all(
@@ -153,7 +158,7 @@ pub mod ravens {
     pub fn upload_theme(name: String) {
         let info = load_info().unwrap();
         if fs::metadata(get_home() + "/.config/raven/themes/" + &name).is_ok() {
-            export(&name);
+            export(&name, true);
             if fs::metadata(name.clone() + ".tar").is_ok() {
                 let form = reqwest::multipart::Form::new()
                     .file("fileupload", name.clone() + ".tar")
@@ -296,7 +301,16 @@ pub mod ravens {
         }
         println!("Thank you for helping keep the repo clean!");
     }
+    pub fn check_tmp() -> bool {
+        fs::metadata("/tmp").is_ok()
+    }
     pub fn download_theme(name: String, force: bool) {
+        let mut tname = String::new();
+        if check_tmp() {
+            tname = tname+ "/tmp/";
+        }
+        tname = tname + &name.clone()+".tar";
+        println!("{}",tname);
         let client = reqwest::Client::new();
         let res = client.get(&(get_host() + "/themes/repo/" + &name)).send();
         if res.is_ok() {
@@ -305,7 +319,7 @@ pub mod ravens {
                 let mut file = OpenOptions::new()
                     .create(true)
                     .write(true)
-                    .open(name.clone() + ".tar")
+                    .open(tname.clone())
                     .expect("Couldn't write theme file");
                 res.copy_to(&mut file).expect("Couldn't pipe to archive");
                 println!("Downloaded theme.");
@@ -321,9 +335,9 @@ pub mod ravens {
                             "Continuing. Please look carefully at the theme files in ~/.config/raven/themes/{} before loading this theme.",
                             name.clone()
                         );
-                        import(&(name.clone() + ".tar"));
+                        import(&tname.clone());
                         println!("Imported theme. Removing archive.");
-                        fs::remove_file(name.clone() + ".tar").unwrap();
+                        fs::remove_file(tname.clone()).unwrap();
                         println!("Downloading metadata.");
                         let meta = get_metadata(name.clone()).unwrap();
                         let mut st = rlib::load_store(name.clone());
@@ -347,7 +361,7 @@ pub mod ravens {
                         }
                     } else {
                         println!("Removing downloaded archive.");
-                        fs::remove_file(name.clone() + ".tar").unwrap();
+                        fs::remove_file(tname.clone()).unwrap();
                     }
                 } else {
                     if res.status() == reqwest::StatusCode::AlreadyReported {
@@ -355,9 +369,9 @@ pub mod ravens {
                             "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Continuing because of --force."
                         );
                     }
-                    import(&(name.clone() + ".tar"));
+                    import(&tname.clone());
                     println!("Imported theme. Removing archive.");
-                    fs::remove_file(name.clone() + ".tar").unwrap();
+                    fs::remove_file(tname.clone()).unwrap();
                     println!("Downloading metadata.");
                     let meta = get_metadata(name.clone()).unwrap();
                     let mut st = rlib::load_store(name.clone());
