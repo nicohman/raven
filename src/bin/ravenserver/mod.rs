@@ -104,13 +104,13 @@ pub mod ravens {
                 println!("Successfully deleted user and all owned themes. Logging out");
                 logout();
             } else {
-                if res.status() == reqwest::StatusCode::Forbidden {
+                if res.status() == reqwest::StatusCode::FORBIDDEN {
                     println!("You are trying to delete a user you are not. Bad!");
-                } else if res.status() == reqwest::StatusCode::Unauthorized {
+                } else if res.status() == reqwest::StatusCode::UNAUTHORIZED {
                     println!(
                         "You're trying to delete a user w/o providing authentication credentials"
                     );
-                } else if res.status() == reqwest::StatusCode::NotFound {
+                } else if res.status() == reqwest::StatusCode::NOT_FOUND {
                     println!("You're trying to delete a user that doesn't exist");
                 } else {
                     println!("Server error. Code {:?}", res.status());
@@ -137,9 +137,9 @@ pub mod ravens {
                         "Successfully created user. Sign in with `raven login [name] [password]`"
                     );
                 } else {
-                    if res.status() == reqwest::StatusCode::Forbidden {
+                    if res.status() == reqwest::StatusCode::FORBIDDEN {
                         println!("User already created. Pick a different name!");
-                    } else if res.status() == reqwest::StatusCode::PayloadTooLarge {
+                    } else if res.status() == reqwest::StatusCode::PAYLOAD_TOO_LARGE {
                         println!(
                             "Either your username or password was too long. The limit is 20 characters for username, and 100 for password."
                         );
@@ -173,7 +173,7 @@ pub mod ravens {
                 if res.is_ok() {
                     let res = res.unwrap();
                     if res.status().is_success() {
-                        if res.status() == reqwest::StatusCode::Created {
+                        if res.status() == reqwest::StatusCode::CREATED {
                             println!("Theme successfully uploaded.");
                         } else {
                             println!("Theme successfully updated.");
@@ -189,7 +189,7 @@ pub mod ravens {
                         );
                         fs::remove_file(name + ".tar").unwrap();
                     } else {
-                        if res.status() == reqwest::StatusCode::Forbidden {
+                        if res.status() == reqwest::StatusCode::FORBIDDEN {
                             println!("That theme already exists, and you are not its owner.");
                         } else {
                             println!("Server error. Code {:?}", res.status());
@@ -219,7 +219,7 @@ pub mod ravens {
                 let meta: MetaRes = res.json().expect("Couldn't deserialize metadata responnse");
                 Ok(meta)
             } else {
-                if res.status() == reqwest::StatusCode::NotFound {
+                if res.status() == reqwest::StatusCode::NOT_FOUND {
                     Err("Theme not found".to_string())
                 } else {
                     Err("Internal Server Error".to_string())
@@ -243,13 +243,13 @@ pub mod ravens {
             if res.status().is_success() {
                 println!("Successfully updated theme metadata");
             } else {
-                if res.status() == reqwest::StatusCode::NotFound {
+                if res.status() == reqwest::StatusCode::NOT_FOUND {
                     println!("That theme hasn't been published");
-                } else if res.status() == reqwest::StatusCode::Forbidden {
+                } else if res.status() == reqwest::StatusCode::FORBIDDEN {
                     println!("Can't edit the metadata of a theme that isn't yours");
-                } else if res.status() == reqwest::StatusCode::PreconditionFailed {
+                } else if res.status() == reqwest::StatusCode::PRECONDITION_FAILED {
                     println!("That isn't a valid metadata type");
-                } else if res.status() == reqwest::StatusCode::PayloadTooLarge {
+                } else if res.status() == reqwest::StatusCode::PAYLOAD_TOO_LARGE {
                     println!(
                         "Your description or screenshot url was more than 200 characters long. Please shorten itt."
                     );
@@ -273,11 +273,11 @@ pub mod ravens {
             if res.status().is_success() {
                 println!("Successfully unpublished theme");
             } else {
-                if res.status() == reqwest::StatusCode::NotFound {
+                if res.status() == reqwest::StatusCode::NOT_FOUND {
                     println!("Can't unpublish a nonexistent theme");
-                } else if res.status() == reqwest::StatusCode::Forbidden {
+                } else if res.status() == reqwest::StatusCode::FORBIDDEN {
                     println!("Can't unpublish a theme that isn't yours");
-                } else if res.status() == reqwest::StatusCode::Unauthorized {
+                } else if res.status() == reqwest::StatusCode::UNAUTHORIZED {
                     println!("Did not provide a valid login token");
                 } else {
                     println!("Server error. Code {:?}", res.status());
@@ -323,7 +323,7 @@ pub mod ravens {
                     .expect("Couldn't write theme file");
                 res.copy_to(&mut file).expect("Couldn't pipe to archive");
                 println!("Downloaded theme.");
-                if res.status() == reqwest::StatusCode::AlreadyReported && !force {
+                if res.status() == reqwest::StatusCode::ALREADY_REPORTED && !force {
                     print!(
                         "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Are you sure you would like to continue? (y/n)"
                     );
@@ -364,7 +364,7 @@ pub mod ravens {
                         fs::remove_file(tname.clone()).unwrap();
                     }
                 } else {
-                    if res.status() == reqwest::StatusCode::AlreadyReported {
+                    if res.status() == reqwest::StatusCode::ALREADY_REPORTED {
                         print!(
                             "This theme has recently been reported, and has not been approved by an admin. It is not advisable to install this theme. Continuing because of --force."
                         );
@@ -395,7 +395,7 @@ pub mod ravens {
                 }
 
             } else {
-                if res.status() == reqwest::StatusCode::NotFound {
+                if res.status() == reqwest::StatusCode::NOT_FOUND {
                     println!("Theme has not been uploaded");
                 } else {
                     println!("Server error. Code {:?}", res.status());
@@ -420,7 +420,7 @@ pub mod ravens {
                 let info = res.json().unwrap();
                 up_info(info);
             } else {
-                if res.status() == reqwest::StatusCode::Forbidden {
+                if res.status() == reqwest::StatusCode::FORBIDDEN {
                     println!("Wrong login info. Try again!");
                 } else {
                     println!("Server error. Code {:?}", res.status());
