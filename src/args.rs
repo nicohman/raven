@@ -1,4 +1,3 @@
-use structopt::StructOpt;
 #[derive(StructOpt, Debug)]
 #[structopt(name = "raven")]
 pub enum Raven {

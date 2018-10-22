@@ -1,21 +1,17 @@
-use std::fs;
-use std::fs::DirEntry;
-use std::env;
-use std::process::Command;
-use std::io;
+use std::{env, fs, fs::DirEntry, io, process::Command};
 #[macro_use]
 extern crate serde_derive;
+extern crate multipart;
+extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate tar;
-extern crate multipart;
-extern crate reqwest;
 #[macro_use]
 extern crate structopt;
 use structopt::StructOpt;
-pub mod ravenserver;
-pub mod ravenlib;
 pub mod args;
+pub mod ravenlib;
+pub mod ravenserver;
 use args::*;
 use ravenlib::*;
 use ravenserver::*;
@@ -30,9 +26,9 @@ fn main() {
 fn interpet_args() {
     //Interpet arguments and check for a need to run init()
     let r = Raven::from_args();
-    use Raven::*;
-    use Manage::*;
     use Cycle::*;
+    use Manage::*;
+    use Raven::*;
     check_themes();
     //If a theme may be changing, kill the previous theme's processes. Currently only polybar
     //and lemonbar
@@ -48,7 +44,9 @@ fn interpet_args() {
         Edit { name } => edit(&name),
         ManageO { .. } => {
             match r {
-                ManageO(Export { name }) => export(&name, check_tmp()),
+                ManageO(Export { name }) => {
+                    export(&name, check_tmp());
+                }
                 ManageO(Import { name }) => import(&name),
                 ManageO(Publish { name }) => upload_theme(name),
                 ManageO(Create { name, pass1, pass2 }) => create_user(name, pass1, pass2),
@@ -57,7 +55,7 @@ fn interpet_args() {
                 ManageO(Logout {}) => logout(),
                 ManageO(DUser { pass }) => delete_user(pass),
                 _ => println!("Well, this shouldn't be happening"),
-            }
+            };
         }
         CycleD { .. } => {
             let running = check_daemon();
@@ -97,8 +95,7 @@ fn interpet_args() {
         Add { name, option } => add_to_theme(&conf.editing, &option, &name),
         Rm { name } => rm_from_theme(&conf.editing, &name),
         Menu {} => show_menu(conf.menu_command),
-    }
-
+    };
 }
 
 fn print_info(editing: String) {
@@ -114,7 +111,7 @@ fn print_info(editing: String) {
         println!("{}", option);
     }
     println!("All themes: ");
-    let themes = get_themes(); 
+    let themes = get_themes();
     for t in themes {
         println!("{}", t);
     }
@@ -131,9 +128,10 @@ fn modify_file(editing: String, file: &str, editor: Option<String>) {
     let editor = editor.unwrap();
     let path = get_home() + "/.config/raven/themes/" + &editing + "/" + file;
     println!("Started {:?} at {}", editor, path);
-    Command::new(editor).arg(path).spawn().expect(
-        "Couldn't run $EDITOR",
-    );
+    Command::new(editor)
+        .arg(path)
+        .spawn()
+        .expect("Couldn't run $EDITOR");
 }
 fn show_menu(menu_command: String) {
     let mut theme_list = String::new();
@@ -151,9 +149,7 @@ fn show_menu(menu_command: String) {
     }
     let output = Command::new("sh")
         .arg("-c")
-        .arg(
-            String::from("echo '") + &theme_list + "' | " + &menu_command,
-        )
+        .arg(String::from("echo '") + &theme_list + "' | " + &menu_command)
         .output()
         .expect("Failed to run menu.");
     let int_output = String::from_utf8_lossy(&output.stdout);
@@ -168,7 +164,6 @@ fn show_menu(menu_command: String) {
     } else {
         println!("Theme not selected.");
     }
-
 }
 
 fn get_home() -> String {

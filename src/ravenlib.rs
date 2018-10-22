@@ -1,27 +1,29 @@
-
 use serde_json;
-use std::env;
-use std::fs;
-use std::fs::{DirEntry, OpenOptions};
-use std::io;
-use std::io::Read;
-use std::io::Write;
-use std::os::unix::fs::OpenOptionsExt;
-use std::process::Command;
-//Returns home directory as string
+use std::{
+    env, fs,
+    fs::{DirEntry, OpenOptions},
+    io,
+    io::{Read, Write},
+    os::unix::fs::OpenOptionsExt,
+    process::Command,
+};
+/// Returns home directory as string
 fn get_home() -> String {
     return String::from(env::home_dir().unwrap().to_str().unwrap());
 }
+/// Default ravenserver host
 fn default_host() -> String {
     String::from("https://demenses.net")
 }
+/// Default screenshot url
 pub fn default_screen() -> String {
     String::new()
 }
+/// Default raven theme description
 fn default_desc() -> String {
     String::from("A raven theme.")
 }
-//Structure for holding theme info, stored in theme.json
+/// Structure for holding theme info, stored in theme.json
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ThemeStore {
     pub name: String,
@@ -32,7 +34,7 @@ pub struct ThemeStore {
     #[serde(default = "default_desc")]
     pub description: String,
 }
-//Structure that holds all methods and data for individual themes.
+/// Structure that holds all methods and data for individual themes.
 pub struct Theme {
     pub name: String,
     pub options: Vec<String>,
@@ -40,7 +42,7 @@ pub struct Theme {
     pub enabled: Vec<String>,
     pub order: Vec<String>,
 }
-//Config structure for holding all main config options
+/// Config structure for holding all main config options
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     pub monitors: i32,
@@ -51,8 +53,8 @@ pub struct Config {
     #[serde(default = "default_host")]
     pub host: String,
 }
-
 impl Config {
+    /// Default method for config file
     pub fn default() -> Config {
         Config {
             monitors: 1,
@@ -60,13 +62,13 @@ impl Config {
             menu_command: "rofi -theme sidebar -mesg 'raven:' -p '> ' -dmenu".to_string(),
             last: "".to_string(),
             editing: "".to_string(),
-            host: "https://demenses.net".to_string(),
+            host: default_host(),
         }
     }
 }
-// Methods for a loaded theme
+/// Methods for a loaded theme
 impl Theme {
-    //Iterates through options and loads them with submethods
+    /// Iterates through options and loads them with submethods
     pub fn load_all(&self) {
         let opt = &self.options;
         let mut i = 1;
@@ -325,18 +327,13 @@ impl Theme {
             .expect("Could not run xrdb");
     }
 }
-//Checks to see if base config/directories need to be initialized
+/// Checks to see if base config/directories need to be initialized
 pub fn check_init() -> bool {
-    if fs::metadata(get_home() + "/.config/raven").is_err()
+    fs::metadata(get_home() + "/.config/raven").is_err()
         || fs::metadata(get_home() + "/.config/raven/config.json").is_err()
         || fs::metadata(get_home() + "/.config/raven/themes").is_err()
-    {
-        true
-    } else {
-        false
-    }
 }
-//Check to see if there are themes still using the old format
+/// Check to see if there are themes still using the old format
 pub fn check_themes() {
     let entries = get_themes();
     for entry in entries {
@@ -345,8 +342,8 @@ pub fn check_themes() {
         }
     }
 }
+/// Create base raven directories and config file(s)
 pub fn init() {
-    //Create base raven directories and config file(s)
     if fs::metadata(get_home() + "/.config/raven/config").is_err() {
         fs::create_dir(get_home() + "/.config/raven").unwrap();
         fs::create_dir(get_home() + "/.config/raven/themes").unwrap();
@@ -364,7 +361,7 @@ pub fn init() {
     file.write_all(default.as_bytes()).unwrap();
     println!("Correctly initialized base config. Please run again to use raven.");
 }
-//Start ravend
+/// Starts ravend
 pub fn start_daemon() {
     Command::new("sh")
         .arg("-c")
@@ -373,6 +370,7 @@ pub fn start_daemon() {
         .expect("Couldn't start daemon.");
     println!("Started cycle daemon.");
 }
+/// Stops ravend
 pub fn stop_daemon() {
     Command::new("pkill")
         .arg("-SIGKILL")
@@ -381,6 +379,7 @@ pub fn stop_daemon() {
         .expect("Couldn't stop daemon.");
     println!("Stopped cycle daemon.");
 }
+/// Checks if the ravend daemon is running
 pub fn check_daemon() -> bool {
     let out = Command::new("ps")
         .arg("aux")
@@ -388,14 +387,10 @@ pub fn check_daemon() -> bool {
         .expect("Couldn't find daemon");
     let form_out = String::from_utf8_lossy(&out.stdout);
     let line_num = form_out.lines().filter(|x| x.contains("ravend")).count();
-    if line_num > 0 {
-        true
-    } else {
-        false
-    }
+    line_num > 0
 }
+/// Changes the theme that is currently being edited
 pub fn edit(theme_name: &str) {
-    //Add and rm commands will affect the theme you are currently editing
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
         let mut conf = get_config();
         conf.editing = theme_name.to_string();
@@ -405,30 +400,31 @@ pub fn edit(theme_name: &str) {
         println!("That theme does not exist");
     }
 }
+/// Clears possible remnants of old themes
 pub fn clear_prev() {
     Command::new("pkill").arg("polybar").output().unwrap();
     Command::new("pkill").arg("lemonbar").output().unwrap();
     Command::new("pkill").arg("dunst").output().unwrap();
 }
+/// Deletes theme from registry
 pub fn del_theme(theme_name: &str) {
     fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
         .expect("Couldn't delete theme");;
 }
+/// Loads last loaded theme from string of last theme's name
 pub fn refresh_theme(last: String) {
-    //Load last loaded theme
     if last.chars().count() > 0 {
         run_theme(load_theme(last.trim()).unwrap());
     } else {
         println!("No last theme saved. Cannot refresh.");
     }
 }
+/// Converts DirEntry into a fully processed file/directory name
 pub fn proc_path(path: DirEntry) -> String {
-    //Converts DirEntry into a fully processed file/directory name
-    let base = path.file_name().into_string().unwrap();
-    return base;
+    path.file_name().into_string().unwrap()
 }
+/// Create new theme directory and 'theme' file
 pub fn new_theme(theme_name: &str) {
-    //Create new theme directory and 'theme' file
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if res.is_ok() {
         res.unwrap();
@@ -451,9 +447,8 @@ pub fn new_theme(theme_name: &str) {
         println!("Theme {} already exists", &theme_name);
     }
 }
-
+/// Add an option to a theme
 pub fn add_to_theme(theme_name: &str, option: &str, path: &str) {
-    //Add an option to a theme
     let cur_theme = load_theme(theme_name).unwrap();
     let cur_st = load_store(String::from(theme_name));
     let mut new_themes = ThemeStore {
@@ -480,8 +475,8 @@ pub fn add_to_theme(theme_name: &str, option: &str, path: &str) {
         get_home() + "/.config/raven/themes/" + &theme_name + "/" + &option,
     ).expect("Couldn't copy config in");
 }
+/// Remove an option from a theme
 pub fn rm_from_theme(theme_name: &str, option: &str) {
-    //Remove an option from a theme
     let cur_theme = load_theme(theme_name).unwrap();
     let cur_st = load_store(String::from(theme_name));
     let mut new_themes = ThemeStore {
@@ -507,13 +502,15 @@ pub fn rm_from_theme(theme_name: &str, option: &str) {
         println!("Couldn't find option {}", option);
     }
 }
+/// Run/refresh a loaded Theme
 pub fn run_theme(new_theme: Theme) {
-    //Run/refresh a loaded Theme
     new_theme.load_all();
+    // Updates the 'last loaded theme' information for later use by raven refresh
     let mut conf = get_config();
     conf.last = new_theme.name;
     up_config(conf);
 }
+/// Updates the written config with a new config
 pub fn up_config(conf: Config) {
     OpenOptions::new()
         .create(true)
@@ -576,8 +573,7 @@ pub fn load_store(theme: String) -> ThemeStore {
         .unwrap()
         .read_to_string(&mut st)
         .unwrap();
-    let thinf: ThemeStore = serde_json::from_str(&st).unwrap();
-    thinf
+    serde_json::from_str(&st).unwrap()
 }
 pub fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
     //Load in data for and run loading methods for a specific theme
@@ -602,7 +598,7 @@ pub fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
         }
     } else {
         println!("Theme does not exist.");
-        ::std::process::exit(64);
+        Err("Theme does not exist")
     }
 }
 
@@ -613,15 +609,13 @@ pub fn get_config() -> Config {
         .expect("Couldn't read config")
         .read_to_string(&mut conf)
         .unwrap();
-    let config: Config = serde_json::from_str(&conf).expect("Couldn't read config file");
-    config
+    serde_json::from_str(&conf).expect("Couldn't read config file")
 }
 pub fn get_themes() -> Vec<String> {
-    let mut entries = fs::read_dir(get_home() + "/.config/raven/themes")
+    fs::read_dir(get_home() + "/.config/raven/themes")
         .expect("Couldn't read themes")
         .collect::<Vec<io::Result<DirEntry>>>()
         .into_iter()
         .map(|x| proc_path(x.unwrap()))
-        .collect::<Vec<String>>();
-    return entries;
+        .collect::<Vec<String>>()
 }

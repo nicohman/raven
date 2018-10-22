@@ -38,23 +38,25 @@ pub fn load_info() -> Result<UserInfo, String> {
         Err("Not logged in".to_string())
     }
 }
-pub fn export(theme_name: &str, tmp: bool)  {
+pub fn export(theme_name: &str, tmp: bool) -> String {
     if fs::metadata(get_home() + "/.config/raven/themes/" + theme_name).is_ok() {
         let mut tname = String::new();
         if tmp {
             tname = tname + "/tmp/";
         }
         tname = tname + &theme_name.to_string() + ".tar";
-        let tb = File::create(theme_name.to_string() + ".tar").unwrap();
+        let tb = File::create(tname.clone()).unwrap();
         let mut b = Builder::new(tb);
         b.append_dir_all(
             theme_name.to_string(),
             get_home() + "/.config/raven/themes/" + theme_name,
         ).expect("Couldn't add theme to archive");
         b.into_inner().expect("Couldn't write tar archive");
-        println!("Wrote theme to {}.tar", theme_name)
+        println!("Wrote theme to {}", tname);
+        tname
     } else {
         println!("Theme does not exist");
+        ::std::process::exit(64);
     }
 }
 pub fn import(file_name: &str) {
@@ -154,10 +156,10 @@ pub fn create_user(name: String, pass: String, pass2: String) {
 pub fn upload_theme(name: String) {
     let info = load_info().unwrap();
     if fs::metadata(get_home() + "/.config/raven/themes/" + &name).is_ok() {
-        export(&name, true);
+        let tname = export(&name, true);
         if fs::metadata(name.clone() + ".tar").is_ok() {
             let form = reqwest::multipart::Form::new()
-                .file("fileupload", name.clone() + ".tar")
+                .file("fileupload", tname.clone())
                 .unwrap();
             let res = reqwest::Client::new()
                 .post(&(get_host() + "/themes/upload?name=" + &name + "&token=" + &info.token))
@@ -181,7 +183,7 @@ pub fn upload_theme(name: String) {
                         String::from("description"),
                         theme_st.description,
                     );
-                    fs::remove_file(name + ".tar").unwrap();
+                    fs::remove_file(tname).unwrap();
                 } else {
                     if res.status() == reqwest::StatusCode::FORBIDDEN {
                         println!("That theme already exists, and you are not its owner.");
