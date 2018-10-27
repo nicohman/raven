@@ -1,4 +1,6 @@
 use ravenlib::*;
+use config::*;
+use themes::*;
 use reqwest;
 use serde_json;
 use std::env;

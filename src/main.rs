@@ -14,6 +14,9 @@ pub mod ravenlib;
 pub mod ravenserver;
 use args::*;
 use ravenlib::*;
+use themes::*;
+use daemon::*;
+use config::*;
 use ravenserver::*;
 //Structure that holds theme data, to be stored in a theme folder.
 fn main() {
