@@ -6,6 +6,7 @@ extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate tar;
+extern crate dirs;
 extern crate ravenlib;
 #[macro_use]
 extern crate structopt;
@@ -13,6 +14,7 @@ use structopt::StructOpt;
 pub mod args;
 pub mod ravenserver;
 use args::*;
+use dirs::home_dir;
 use ravenlib::*;
 use themes::*;
 use daemon::*;
@@ -170,7 +172,7 @@ fn show_menu(menu_command: String) {
 }
 
 fn get_home() -> String {
-    return String::from(env::home_dir().unwrap().to_str().unwrap());
+    return String::from(home_dir().unwrap().to_str().unwrap());
 }
 fn proc_path(path: DirEntry) -> String {
     //Converts DirEntry into a fully processed file/directory name

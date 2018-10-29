@@ -2,6 +2,7 @@
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
+extern crate dirs;
 use std::{
     env, fs,
     fs::{DirEntry, OpenOptions},
@@ -12,11 +13,12 @@ use std::{
 };
 /// Config module
 pub mod config {
-    use std::{env, fs, fs::OpenOptions, io::Read, io::Write};
     use crate::themes::*;
+    use dirs::home_dir;
+    use std::{env, fs, fs::OpenOptions, io::Read, io::Write};
     /// Returns home directory as string
     pub fn get_home() -> String {
-        return String::from(env::home_dir().unwrap().to_str().unwrap());
+        return String::from(home_dir().unwrap().to_str().unwrap());
     }
     /// Default ravenserver host
     pub fn default_host() -> String {
@@ -194,8 +196,8 @@ pub mod config {
 }
 /// Module for theme manipulation
 pub mod themes {
-    use proc_path;
     use crate::config::*;
+    use proc_path;
     use std::{
         env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write,
         os::unix::fs::OpenOptionsExt, process::Command,

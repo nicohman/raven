@@ -1,17 +1,18 @@
-use ravenlib::*;
 use config::*;
-use themes::*;
+use dirs::home_dir;
+use ravenlib::*;
 use reqwest;
 use serde_json;
-use std::env;
-use std::fs;
-use std::fs::{File, OpenOptions};
-use std::io;
-use std::io::Read;
-use std::io::Write;
+use std::{
+    env, fs,
+    fs::{File, OpenOptions},
+    io,
+    io::{Read, Write},
+};
 use tar::{Archive, Builder};
+use themes::*;
 fn get_home() -> String {
-    return String::from(env::home_dir().unwrap().to_str().unwrap());
+    return String::from(home_dir().unwrap().to_str().unwrap());
 }
 #[derive(Serialize, Deserialize, Debug)]
 pub struct UserInfo {
@@ -52,7 +53,8 @@ pub fn export(theme_name: &str, tmp: bool) -> String {
         b.append_dir_all(
             theme_name.to_string(),
             get_home() + "/.config/raven/themes/" + theme_name,
-        ).expect("Couldn't add theme to archive");
+        )
+        .expect("Couldn't add theme to archive");
         b.into_inner().expect("Couldn't write tar archive");
         println!("Wrote theme to {}", tname);
         tname
