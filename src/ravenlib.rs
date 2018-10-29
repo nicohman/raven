@@ -1,4 +1,7 @@
-use serde_json;
+#[macro_use]
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
 use std::{
     env, fs,
     fs::{DirEntry, OpenOptions},
@@ -10,7 +13,7 @@ use std::{
 /// Config module
 pub mod config {
     use std::{env, fs, fs::OpenOptions, io::Read, io::Write};
-    use themes::*;
+    use crate::themes::*;
     /// Returns home directory as string
     pub fn get_home() -> String {
         return String::from(env::home_dir().unwrap().to_str().unwrap());
@@ -192,7 +195,7 @@ pub mod config {
 /// Module for theme manipulation
 pub mod themes {
     use proc_path;
-    use ravenlib::config::*;
+    use crate::config::*;
     use std::{
         env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write,
         os::unix::fs::OpenOptionsExt, process::Command,

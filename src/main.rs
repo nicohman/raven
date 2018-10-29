@@ -6,11 +6,11 @@ extern crate reqwest;
 extern crate serde;
 extern crate serde_json;
 extern crate tar;
+extern crate ravenlib;
 #[macro_use]
 extern crate structopt;
 use structopt::StructOpt;
 pub mod args;
-pub mod ravenlib;
 pub mod ravenserver;
 use args::*;
 use ravenlib::*;
