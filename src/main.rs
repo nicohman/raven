@@ -1,26 +1,16 @@
 use std::{env, fs, fs::DirEntry, io, process::Command};
-#[macro_use]
-extern crate serde_derive;
-extern crate multipart;
-extern crate reqwest;
-extern crate serde;
-extern crate serde_json;
-extern crate tar;
 extern crate dirs;
 extern crate ravenlib;
+extern crate serde;
+extern crate serde_derive;
+extern crate serde_json;
 #[macro_use]
 extern crate structopt;
 use structopt::StructOpt;
 pub mod args;
-pub mod ravenserver;
 use args::*;
 use dirs::home_dir;
-use ravenlib::*;
-use themes::*;
-use daemon::*;
-use config::*;
-use ravenserver::*;
-//Structure that holds theme data, to be stored in a theme folder.
+use ravenlib::{config::*, daemon::*, ravenserver::*, themes::*};
 fn main() {
     if check_init() {
         init();

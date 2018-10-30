@@ -1,21 +1,17 @@
-#[macro_use]
 extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 extern crate dirs;
-use std::{
-    env, fs,
-    fs::{DirEntry, OpenOptions},
-    io,
-    io::{Read, Write},
-    os::unix::fs::OpenOptionsExt,
-    process::Command,
-};
+extern crate multipart;
+extern crate reqwest;
+extern crate tar;
+pub mod ravenserver;
+use std::fs::DirEntry;
 /// Config module
 pub mod config {
     use crate::themes::*;
     use dirs::home_dir;
-    use std::{env, fs, fs::OpenOptions, io::Read, io::Write};
+    use std::{fs, fs::OpenOptions, io::Read, io::Write};
     /// Returns home directory as string
     pub fn get_home() -> String {
         return String::from(home_dir().unwrap().to_str().unwrap());

@@ -1,16 +1,14 @@
 use config::*;
 use dirs::home_dir;
-use ravenlib::*;
 use reqwest;
 use serde_json;
 use std::{
-    env, fs,
+    fs,
     fs::{File, OpenOptions},
     io,
     io::{Read, Write},
 };
 use tar::{Archive, Builder};
-use themes::*;
 fn get_home() -> String {
     return String::from(home_dir().unwrap().to_str().unwrap());
 }

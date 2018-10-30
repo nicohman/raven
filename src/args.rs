@@ -5,7 +5,10 @@ pub enum Raven {
     Load { theme: String },
     #[structopt(name = "new", about = "Create a new theme")]
     New { name: String },
-    #[structopt(name = "modify", about = "Open the currently edited themes's option in $EDITOR")]
+    #[structopt(
+        name = "modify",
+        about = "Open the currently edited themes's option in $EDITOR"
+    )]
     Modify {
         /// Use custom editor
         #[structopt(short = "e", long = "editor")]
@@ -14,7 +17,10 @@ pub enum Raven {
     },
     #[structopt(name = "delete", about = "Delete a theme")]
     Delete { name: String },
-    #[structopt(name = "info", about = "Print info about the theme being currently edited")]
+    #[structopt(
+        name = "info",
+        about = "Print info about the theme being currently edited"
+    )]
     Info {},
     #[structopt(name = "refresh", about = "Load last loaded theme")]
     Refresh {},
@@ -52,7 +58,10 @@ pub enum Manage {
         pass1: String,
         pass2: String,
     },
-    #[structopt(name = "delete_user", about = "Delete an online user's profile and owned themes")]
+    #[structopt(
+        name = "delete_user",
+        about = "Delete an online user's profile and owned themes"
+    )]
     DUser { pass: String },
     #[structopt(name = "logout", about = "Log out of your user profile")]
     Logout {},
