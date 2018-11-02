@@ -244,6 +244,9 @@ pub mod themes {
                     "lemonbar" => self.load_lemon(),
                     "openbox" => self.load_openbox(),
                     "dunst" => self.load_dunst(),
+                    "st_tmtheme" => self.load_sublt("st_tmtheme"),
+                    "st_scs" => self.load_sublt("st_scs"),
+                    "st_subltheme" => self.load_sublt("st_subltheme"),
                     "|" => {}
                     _ => println!("Unknown option"),
                 };
@@ -339,6 +342,71 @@ pub mod themes {
                 .write_all(config.as_bytes())
                 .unwrap();
             Command::new("dunst").spawn().expect("Failed to run dunst");
+        }
+
+        pub fn load_sublt(&self, stype: &str) {
+            let sublpath = "/.config/sublime-text-3/Packages/User";
+            if fs::metadata(get_home() + &sublpath).is_err() {
+                println!("Couldn't find {}. Do you have sublime text 3 installed? \
+                Skipping.", get_home() + &sublpath);
+                return;
+            }
+            
+            let mut value = String::new();           
+            fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/" + &stype)
+                .unwrap()
+                .read_to_string(&mut value)
+                .unwrap();
+            let mut pat = "";
+            if stype == "st_tmtheme" || stype == "st_scs" {
+                pat = "\"color_scheme\": ";
+            } else if stype == "st_subltheme" {
+                pat = "\"theme\": ";
+            }
+            if fs::metadata(get_home() + sublpath + "/Preferences.sublime-settings").is_ok() {
+                let mut pre = String::new();
+                fs::File::open(get_home() + sublpath + "/Preferences.sublime-settings")
+                    .expect("Couldn't open sublime settings")
+                    .read_to_string(&mut pre)
+                    .unwrap();
+                let mut finals = String::new();
+                let mut patfound = false;
+                for line in pre.lines() {
+                    if line.contains(pat) {
+                        patfound = true;
+                        if line.ends_with(",") {
+                            finals = finals + "\n" + "    " + pat + "\"" + &value + "\","
+                        } else {
+                            finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
+                        }
+                    } else if line.ends_with("}") && ! patfound {
+                        finals = finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
+                    } else {
+                        finals = finals + "\n" + line;
+                    }
+                }
+                OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .truncate(true)
+                    .open(get_home() + sublpath + "/Preferences.sublime-settings")
+                    .expect("Couldn't open sublime settings")
+                    .write_all(finals.trim().as_bytes())
+                    .unwrap();
+            } else {
+                let mut finals = String::new();
+                finals = finals + "// Settings in here override those in \
+                \"Default/Preferences.sublime-settings\",\n\
+                // and are overridden in turn by syntax-specific settings.\n\
+                {\n    " + pat + "\"" + &value + "\"\n}";
+                OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(get_home() + sublpath + "/Preferences.sublime-settings")
+                    .expect("Couldn't open sublime settings")
+                    .write_all(finals.as_bytes())
+                    .unwrap();
+            }
         }
 
         pub fn load_ncm(&self) {

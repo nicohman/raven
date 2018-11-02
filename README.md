@@ -47,6 +47,8 @@ The following packages are required for their relevant options:
 
 + [Dunst](https://github.com/dunst-project/dunst) : `dunst`
 
++ [Sublime Text 3](https://www.sublimetext.com/) : `st_tmtheme`, `st_scs` and `st_subltheme`
+
 * New option suggestions are very welcome!
 
 You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
@@ -56,7 +58,7 @@ You can also download a prebuilt binary from [here](https://github.com/nicohman/
 `raven help` for a list of available commands:
 
 ```
-raven 
+raven
 nicohman <nicohman@demenses.net>
 A theme manager and switcher for desktop linux
 
@@ -114,6 +116,9 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 + lemonbar (A shell script that should spawn your lemonbar)
 + openbox [base_rc.xml] (rc.xml)
 + dunst [base_dunst] (dunstrc)
++ [st_tmtheme](#sublime-text-3)
++ [st_scs](#sublime-text-3)
++ [st_subltheme](#sublime-text-3)
 
 base_ files allow splitting the config from the cosmetics on the options with [base_]
 For example if you place an i3 config named base\_i3 in ~/.config/raven, the contents of i3 for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme.
@@ -127,3 +132,7 @@ As many polybars as you have monitors will be started. The names of the bars the
 ### Cycle themes
 
 With the cycle command you can control a daemon that will automatically cycle through all of your configured themes. You need to edit `~/.config/raven/time` and place the number of seconds there should be between each cycle into that file in order to use it.
+
+### Sublime Text 3
+
+Plain text containing the absolute (allowing `$HOME` and `~`) or relative path (To the sublime config directory. Usually `~/.config/sublime-text-3/`) of a .tmTheme, .sublime-color-scheme or .sublime-theme file.
