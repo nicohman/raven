@@ -196,7 +196,7 @@ pub mod themes {
     use proc_path;
     use std::{
         env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write,
-        io::ErrorKind, os::unix::fs::OpenOptionsExt, process::Command,
+        os::unix::fs::OpenOptionsExt, process::Command,
     };
     /// Structure for holding theme info, stored in theme.json
     #[derive(Serialize, Deserialize, Debug)]
@@ -244,7 +244,9 @@ pub mod themes {
                     "lemonbar" => self.load_lemon(),
                     "openbox" => self.load_openbox(),
                     "dunst" => self.load_dunst(),
-                    "sublt.json" => self.load_sublt(),
+                    "st_tmtheme" => self.load_sublt("st_tmtheme"),
+                    "st_scs" => self.load_sublt("st_scs"),
+                    "st_subltheme" => self.load_sublt("st_subltheme"),
                     "|" => {}
                     _ => println!("Unknown option"),
                 };
@@ -342,124 +344,68 @@ pub mod themes {
             Command::new("dunst").spawn().expect("Failed to run dunst");
         }
 
-        pub fn load_sublt(&self) {
+        pub fn load_sublt(&self, stype: &str) {
             let sublpath = "/.config/sublime-text-3/Packages/User";
-
             if fs::metadata(get_home() + &sublpath).is_err() {
                 println!("Couldn't find {}. Do you have sublime text 3 installed? \
-                Skipping sublt option.", get_home() + &sublpath);
+                Skipping.", get_home() + &sublpath);
                 return;
             }
-
-            #[derive(Serialize, Deserialize, Debug)]
-            pub struct Sublt {
-                pub tmtheme: String,
-                pub scs: String,
-                pub sublimetheme: String,
-            }
-
-            let mut data = String::new();
-            fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/sublt.json")
-                .expect("Couldn't read sublt.json")
-                .read_to_string(&mut data)
-                .unwrap();
             
-            let d: Sublt = serde_json::from_str(&data).expect("Couldn't read sublt.json data");
-
-            for (value, stype) in [d.tmtheme, d.scs, d.sublimetheme].iter()
-            .zip(["tmTheme", "sublime-color-scheme", "sublime-theme"].iter()) {
-                match value.parse() {
-                    Ok(true) => {
-                        if stype == &"sublime-theme" {
-                            println!("Value true isn't allowed for sublime-theme. Skipping.");
-                            continue;
+            let mut value = String::new();           
+            fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/" + &stype)
+                .unwrap()
+                .read_to_string(&mut value)
+                .unwrap();
+            let mut pat = "";
+            if stype == "st_tmtheme" || stype == "st_scs" {
+                pat = "\"color_scheme\": ";
+            } else if stype == "st_subltheme" {
+                pat = "\"theme\": ";
+            }
+            if fs::metadata(get_home() + sublpath + "/Preferences.sublime-settings").is_ok() {
+                let mut pre = String::new();
+                fs::File::open(get_home() + sublpath + "/Preferences.sublime-settings")
+                    .expect("Couldn't open sublime settings")
+                    .read_to_string(&mut pre)
+                    .unwrap();
+                let mut finals = String::new();
+                let mut patfound = false;
+                for line in pre.lines() {
+                    if line.contains(pat) {
+                        patfound = true;
+                        if line.ends_with(",") {
+                            finals = finals + "\n" + "    " + pat + "\"" + &value + "\","
+                        } else {
+                            finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
                         }
-                        match fs::copy(
-                            get_home() + "/.config/raven/themes/" + &self.name + "/sublt/s." + stype,
-                            get_home() + &sublpath + "/raven." + stype) {
-                                Ok(_t) => (),
-                                Err(ref error) if error.kind() == ErrorKind::InvalidInput => {
-                                    println!("Couldn't copy {} file. Does it exist? Skipping.",
-                                    get_home() + "/.config/raven/themes/" + &self.name + "/sublt/s." + stype);
-                                    continue;
-                                },
-                                Err(e) => {
-                                    println!("Couldn't copy {} file. {} Skipping.",
-                                    get_home() + "/.config/raven/themes/" + &self.name + "/sublt/s." + stype,
-                                    e);
-                                    continue;
-                                },
-                            }
-
-                        // edit_config(&stype, "Packages/User/raven." + stype);
-                        if stype == &"tmTheme" {
-                            edit_config(&stype, "Packages/User/raven.tmTheme");
-                        } else if stype == &"sublime-color-scheme" {
-                            edit_config(&stype, "Packages/User/raven.sublime-color-scheme");
-                        }
-                    },
-                    Ok(false) => (),
-                    Err(_e) => {
-                        edit_config(&stype, &value);
-                    },
-                }
-                fn edit_config(stype: &str, value: &str) {
-                    let sublpath = "/.config/sublime-text-3/Packages/User";
-
-                    let mut pat = "";
-                    if stype == "tmTheme" || stype == "sublime-color-scheme" {
-                        pat = "\"color_scheme\": ";
-                    } else if stype == "sublime-theme" {
-                        pat = "\"theme\": ";
-                    }
-
-                    if fs::metadata(get_home() + sublpath + "/Preferences.sublime-settings").is_ok() {
-                        let mut pre = String::new();
-                        fs::File::open(get_home() + sublpath + "/Preferences.sublime-settings")
-                            .expect("Couldn't open sublime settings")
-                            .read_to_string(&mut pre)
-                            .unwrap();
-                        let mut finals = String::new();
-                        let mut patfound = false;
-                        for line in pre.lines() {
-                            if line.trim().starts_with("{") {
-                                finals = finals + line;
-                            } else if line.contains(pat) {
-                                patfound = true;
-                                if line.ends_with(",") {
-                                    finals = finals + "\n" + "    " + pat + "\"" + value + "\","
-                                } else {
-                                    finals = finals + "\n" + "    " + pat + "\"" + value + "\""
-                                }
-                            } else if line.ends_with("}") && ! patfound {
-                                finals = finals + "," + "\n" + "    " + pat + "\"" + value + "\"" + "\n" + line;
-                            } else {
-                                finals = finals + "\n" + line;
-                            }
-                        }
-                        OpenOptions::new()
-                            .create(true)
-                            .write(true)
-                            .truncate(true)
-                            .open(get_home() + sublpath + "/Preferences.sublime-settings")
-                            .expect("Couldn't open sublime settings")
-                            .write_all(finals.as_bytes())
-                            .unwrap();
+                    } else if line.ends_with("}") && ! patfound {
+                        finals = finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
                     } else {
-                        let mut finals = String::new();
-                        finals = finals + "// Settings in here override those in \
-                        \"Default/Preferences.sublime-settings\",\n\
-                        // and are overridden in turn by syntax-specific settings.\n\
-                        {\n    " + pat + "\"" + value + "\"\n}";
-                        OpenOptions::new()
-                            .create(true)
-                            .write(true)
-                            .open(get_home() + sublpath + "/Preferences.sublime-settings")
-                            .expect("Couldn't open sublime settings")
-                            .write_all(finals.as_bytes())
-                            .unwrap();
+                        finals = finals + "\n" + line;
                     }
                 }
+                OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .truncate(true)
+                    .open(get_home() + sublpath + "/Preferences.sublime-settings")
+                    .expect("Couldn't open sublime settings")
+                    .write_all(finals.trim().as_bytes())
+                    .unwrap();
+            } else {
+                let mut finals = String::new();
+                finals = finals + "// Settings in here override those in \
+                \"Default/Preferences.sublime-settings\",\n\
+                // and are overridden in turn by syntax-specific settings.\n\
+                {\n    " + pat + "\"" + &value + "\"\n}";
+                OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .open(get_home() + sublpath + "/Preferences.sublime-settings")
+                    .expect("Couldn't open sublime settings")
+                    .write_all(finals.as_bytes())
+                    .unwrap();
             }
         }
 

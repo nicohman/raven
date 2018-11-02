@@ -47,7 +47,7 @@ The following packages are required for their relevant options:
 
 + [Dunst](https://github.com/dunst-project/dunst) : `dunst`
 
-+ [Sublime Text 3](https://www.sublimetext.com/) : `sublt`
++ [Sublime Text 3](https://www.sublimetext.com/) : `st_tmtheme`, `st_scs` and `st_subltheme`
 
 * New option suggestions are very welcome!
 
@@ -116,7 +116,9 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 + lemonbar (A shell script that should spawn your lemonbar)
 + openbox [base_rc.xml] (rc.xml)
 + dunst [base_dunst] (dunstrc)
-+ [sublt](#sublime-text-3) (sublt.json)
++ [st_tmtheme](#sublime-text-3)
++ [st_scs](#sublime-text-3)
++ [st_subltheme](#sublime-text-3)
 
 base_ files allow splitting the config from the cosmetics on the options with [base_]
 For example if you place an i3 config named base\_i3 in ~/.config/raven, the contents of i3 for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme.
@@ -133,19 +135,4 @@ With the cycle command you can control a daemon that will automatically cycle th
 
 ### Sublime Text 3
 
-To theme sublime text 3 you set the options inside a sublt.json.
-An example sublt.json:
-
-``` json
-{
-    "tmtheme": "false",
-    "scs": "true",
-    "sublimetheme": "DA.sublime-theme"
-}
-```
-
-`tmtheme` (.tmTheme) and `scs` (.sublime-color-scheme) can be false, true or a path relative to the sublime text User folder (`~/.config/sublime-text-3/Packages/User`).
-`sublimetheme` (.sublime-theme) on the other hand can only be false or a path.
-`false` will disable the option.
-`true` will copy the respective color scheme from the sublt folder into the sublime text User folder as raven.&lt;EXTENSION> and set it into `Preferences.sublime-config`.
-`path` will set the path as the respective theme or colorscheme into `Preferences.sublime.config`.
+Plain text containing the absolute (allowing `$HOME` and `~`) or relative path (To the sublime config directory. Usually `~/.config/sublime-text-3/`) of a .tmTheme, .sublime-color-scheme or .sublime-theme file.
