@@ -14,9 +14,8 @@ use ravenlib::{config::*, daemon::*, ravenserver::*, themes::*};
 fn main() {
     if check_init() {
         init();
-    } else {
-        interpet_args();
     }
+    interpet_args();
 }
 fn interpet_args() {
     //Interpet arguments and check for a need to run init()
