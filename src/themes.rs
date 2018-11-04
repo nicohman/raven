@@ -1,8 +1,8 @@
 use crate::config::*;
 use proc_path;
 use std::{
-    env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write,
-    os::unix::fs::OpenOptionsExt, process::Command,
+    env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write, os::unix::fs::OpenOptionsExt,
+    process::Command,
 };
 /// Structure for holding theme info, stored in theme.json
 #[derive(Serialize, Deserialize, Debug)]
@@ -150,11 +150,18 @@ impl Theme {
         Command::new("dunst").spawn().expect("Failed to run dunst");
     }
 
-    pub fn load_sublt(&self, stype: &str) {
+    pub fn load_sublt<N>(&self, stype: N)
+    where
+        N: Into<String>,
+    {
+        let stype = &stype.into();
         let sublpath = "/.config/sublime-text-3/Packages/User";
         if fs::metadata(get_home() + &sublpath).is_err() {
-            println!("Couldn't find {}. Do you have sublime text 3 installed? \
-            Skipping.", get_home() + &sublpath);
+            println!(
+                "Couldn't find {}. Do you have sublime text 3 installed? \
+                 Skipping.",
+                get_home() + &sublpath
+            );
             return;
         }
 
@@ -185,8 +192,9 @@ impl Theme {
                     } else {
                         finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
                     }
-                } else if line.ends_with("}") && ! patfound {
-                    finals = finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
+                } else if line.ends_with("}") && !patfound {
+                    finals =
+                        finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
                 } else {
                     finals = finals + "\n" + line;
                 }
@@ -201,10 +209,15 @@ impl Theme {
                 .unwrap();
         } else {
             let mut finals = String::new();
-            finals = finals + "// Settings in here override those in \
-            \"Default/Preferences.sublime-settings\",\n\
-            // and are overridden in turn by syntax-specific settings.\n\
-            {\n    " + pat + "\"" + &value + "\"\n}";
+            finals = finals
+                + "// Settings in here override those in \
+                   \"Default/Preferences.sublime-settings\",\n\
+                   // and are overridden in turn by syntax-specific settings.\n\
+                   {\n    "
+                + pat
+                + "\""
+                + &value
+                + "\"\n}";
             OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -360,7 +373,11 @@ impl Theme {
 }
 
 /// Changes the theme that is currently being edited
-pub fn edit(theme_name: &str) {
+pub fn edit<N>(theme_name: N)
+where
+    N: Into<String>,
+{
+    let theme_name = theme_name.into();
     if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name).is_ok() {
         let mut conf = get_config();
         conf.editing = theme_name.to_string();
@@ -377,12 +394,19 @@ pub fn clear_prev() {
     Command::new("pkill").arg("dunst").output().unwrap();
 }
 /// Deletes theme from registry
-pub fn del_theme(theme_name: &str) {
-    fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name)
+pub fn del_theme<N>(theme_name: N)
+where
+    N: Into<String>,
+{
+    fs::remove_dir_all(get_home() + "/.config/raven/themes/" + &theme_name.into())
         .expect("Couldn't delete theme");;
 }
 /// Loads last loaded theme from string of last theme's name
-pub fn refresh_theme(last: String) {
+pub fn refresh_theme<N>(last: N)
+where
+    N: Into<String>,
+{
+    let last = last.into();
     if last.chars().count() > 0 {
         run_theme(load_theme(last.trim()).unwrap());
     } else {
@@ -390,7 +414,11 @@ pub fn refresh_theme(last: String) {
     }
 }
 /// Create new theme directory and 'theme' file
-pub fn new_theme(theme_name: &str) {
+pub fn new_theme<N>(theme_name: N)
+where
+    N: Into<String>,
+{
+    let theme_name = theme_name.into();
     let res = fs::create_dir(get_home() + "/.config/raven/themes/" + &theme_name);
     if res.is_ok() {
         res.unwrap();
@@ -400,7 +428,7 @@ pub fn new_theme(theme_name: &str) {
             .open(get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json")
             .expect("can open");
         let stdef = ThemeStore {
-            name: String::from(theme_name),
+            name: theme_name.clone(),
             options: vec![],
             enabled: vec![],
             screenshot: default_screen(),
@@ -408,17 +436,21 @@ pub fn new_theme(theme_name: &str) {
         };
         let st = serde_json::to_string(&stdef).unwrap();
         file.write_all(st.as_bytes()).unwrap();
-        edit(&theme_name);
+        edit(theme_name);
     } else {
         println!("Theme {} already exists", &theme_name);
     }
 }
 /// Add an option to a theme
-pub fn add_to_theme(theme_name: &str, option: &str, path: &str) {
-    let cur_theme = load_theme(theme_name).unwrap();
-    let cur_st = load_store(String::from(theme_name));
+pub fn add_to_theme<N>(theme_name: N, option: N, path: N)
+where
+    N: Into<String>,
+{
+    let (theme_name, option, path) = (theme_name.into(), option.into(), path.into());
+    let cur_theme = load_theme(theme_name.as_str()).unwrap();
+    let cur_st = load_store(theme_name.as_str());
     let mut new_themes = ThemeStore {
-        name: theme_name.to_string(),
+        name: theme_name.clone(),
         options: cur_theme.options,
         enabled: cur_theme.enabled,
         screenshot: cur_st.screenshot,
@@ -426,12 +458,12 @@ pub fn add_to_theme(theme_name: &str, option: &str, path: &str) {
     };
     let mut already_used = false;
     for opt in &new_themes.options {
-        if opt == option {
+        if opt == &option {
             already_used = true;
         }
     }
     if !already_used {
-        new_themes.options.push(String::from(option));
+        new_themes.options.push(option.clone());
         up_theme(new_themes);
     }
     let mut totpath = env::current_dir().unwrap();
@@ -443,11 +475,15 @@ pub fn add_to_theme(theme_name: &str, option: &str, path: &str) {
     .expect("Couldn't copy config in");
 }
 /// Remove an option from a theme
-pub fn rm_from_theme(theme_name: &str, option: &str) {
-    let cur_theme = load_theme(theme_name).unwrap();
-    let cur_st = load_store(String::from(theme_name));
+pub fn rm_from_theme<N>(theme_name: N, option: N)
+where
+    N: Into<String>,
+{
+    let (theme_name, option) = (theme_name.into(), option.into());
+    let cur_theme = load_theme(theme_name.as_str()).unwrap();
+    let cur_st = load_store(theme_name.as_str());
     let mut new_themes = ThemeStore {
-        name: theme_name.to_string(),
+        name: theme_name,
         options: cur_theme.options,
         enabled: cur_theme.enabled,
         screenshot: cur_st.screenshot,
@@ -456,7 +492,7 @@ pub fn rm_from_theme(theme_name: &str, option: &str) {
     let mut found = false;
     let mut i = 0;
     while i < new_themes.options.len() {
-        if &new_themes.options[i] == option {
+        if &new_themes.options[i] == &option {
             println!("Found option {}", option);
             found = true;
             new_themes.options.remove(i);
@@ -477,7 +513,7 @@ pub fn run_theme(new_theme: Theme) {
     conf.last = new_theme.name;
     up_config(conf);
 }
-
+/// Get all themes
 pub fn get_themes() -> Vec<String> {
     fs::read_dir(get_home() + "/.config/raven/themes")
         .expect("Couldn't read themes")

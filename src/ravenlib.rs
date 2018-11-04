@@ -59,7 +59,7 @@ pub mod config {
         let entries = get_themes();
         for entry in entries {
             if fs::metadata(get_home() + "/.config/raven/themes/" + &entry + "/theme").is_ok() {
-                convert_theme(&entry);
+                convert_theme(entry);
             }
         }
     }
@@ -118,9 +118,14 @@ pub mod config {
         fs::remove_file(&wthemepath).unwrap();
     }
 
-    pub fn convert_theme(theme_name: &str) {
+    pub fn convert_theme<N>(theme_name: N)
+    where
+        N: Into<String>,
+    {
+        let theme_name = theme_name.into();
         let mut theme = String::new();
-        fs::File::open(get_home() + "/.config/raven/themes/" + theme_name + "/theme")
+        let otp = get_home() + "/.config/raven/themes/" + &theme_name + "/theme";
+        fs::File::open(&otp)
             .expect("Couldn't read theme")
             .read_to_string(&mut theme)
             .unwrap();
@@ -130,23 +135,27 @@ pub mod config {
             .filter(|x| x.len() > 0)
             .filter(|x| x != "|")
             .collect::<Vec<String>>();
+        fs::remove_file(otp).unwrap();
         let themes = ThemeStore {
-            name: theme_name.to_string(),
+            name: theme_name.clone(),
             enabled: Vec::new(),
             options: options,
             screenshot: default_screen(),
             description: default_desc(),
         };
-        fs::remove_file(get_home() + "/.config/raven/themes/" + theme_name + "/theme").unwrap();
         OpenOptions::new()
             .create(true)
             .write(true)
-            .open(get_home() + "/.config/raven/themes/" + theme_name + "/theme.json")
+            .open(get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json")
             .expect("Can't open theme.json")
             .write_all(serde_json::to_string(&themes).unwrap().as_bytes())
             .unwrap();
     }
-    pub fn load_store(theme: String) -> ThemeStore {
+    pub fn load_store<N>(theme: N) -> ThemeStore
+    where
+        N: Into<String>,
+    {
+        let theme = theme.into();
         let mut st = String::new();
         fs::File::open(get_home() + "/.config/raven/themes/" + &theme + "/theme.json")
             .unwrap()
@@ -154,8 +163,13 @@ pub mod config {
             .unwrap();
         serde_json::from_str(&st).unwrap()
     }
-    pub fn load_theme(theme_name: &str) -> Result<Theme, &'static str> {
-        //Load in data for and run loading methods for a specific theme
+    /// Load in data for and run loading methods for a specific theme
+    pub fn load_theme<N>(theme_name: N) -> Result<Theme, &'static str>
+    where
+        N: Into<String>,
+    {
+        let theme_name = theme_name.into();
+
         let conf = get_config();
         let ent_res = fs::read_dir(get_home() + "/.config/raven/themes/" + &theme_name);
         if ent_res.is_ok() {
@@ -163,14 +177,14 @@ pub mod config {
             if fs::metadata(get_home() + "/.config/raven/themes/" + &theme_name + "/theme.json")
                 .is_ok()
             {
-                let theme_info = load_store(String::from(theme_name));
+                let theme_info = load_store(theme_name.as_str());
                 let opts: Vec<String> = theme_info.options;
                 let new_theme = Theme {
-                    name: String::from(theme_name),
+                    name: theme_name,
                     options: opts,
                     monitor: conf.monitors,
                     enabled: theme_info.enabled,
-                    order: conf.polybar.clone(),
+                    order: conf.polybar,
                 };
                 Ok(new_theme)
             } else {
@@ -181,9 +195,8 @@ pub mod config {
             Err("Theme does not exist")
         }
     }
-
+    /// Retrieve config settings from file
     pub fn get_config() -> Config {
-        //Retrieve config settings from file
         let mut conf = String::new();
         fs::File::open(get_home() + "/.config/raven/config.json")
             .expect("Couldn't read config")

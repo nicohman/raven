@@ -30,18 +30,18 @@ fn interpet_args() {
     match r {
         Load { theme } => {
             clear_prev();
-            run_theme(load_theme(&theme).unwrap());
+            run_theme(load_theme(theme).unwrap());
         }
-        New { name } => new_theme(&name),
-        Modify { name, editor } => modify_file(conf.editing, &name, editor),
-        Delete { name } => del_theme(&name),
-        Edit { name } => edit(&name),
+        New { name } => new_theme(name),
+        Modify { name, editor } => modify_file(conf.editing, name, editor),
+        Delete { name } => del_theme(name),
+        Edit { name } => edit(name),
         ManageO { .. } => {
             match r {
                 ManageO(Export { name }) => {
-                    export(&name, check_tmp());
+                    export(name, check_tmp());
                 }
-                ManageO(Import { name }) => import(&name),
+                ManageO(Import { name }) => import(name),
                 ManageO(Publish { name }) => upload_theme(name),
                 ManageO(Create { name, pass1, pass2 }) => create_user(name, pass1, pass2),
                 ManageO(Unpublish { name }) => unpublish_theme(name),
@@ -86,13 +86,17 @@ fn interpet_args() {
             refresh_theme(conf.last);
         }
         Install { name, force } => download_theme(name, force),
-        Add { name, option } => add_to_theme(&conf.editing, &option, &name),
-        Rm { name } => rm_from_theme(&conf.editing, &name),
+        Add { name, option } => add_to_theme(conf.editing, option, name),
+        Rm { name } => rm_from_theme(conf.editing, name),
         Menu {} => show_menu(conf.menu_command),
     };
 }
 
-fn print_info(editing: String) {
+fn print_info<N>(editing: N)
+where
+    N: Into<String>,
+{
+    let editing = editing.into();
     let options = fs::read_dir(get_home() + "/.config/raven/themes/" + &editing)
         .expect("Couldn't read themes")
         .collect::<Vec<io::Result<DirEntry>>>()
@@ -110,7 +114,10 @@ fn print_info(editing: String) {
         println!("{}", t);
     }
 }
-fn modify_file(editing: String, file: &str, editor: Option<String>) {
+fn modify_file<N>(editing: N, file: N, editor: Option<N>)
+where
+    N: Into<String>,
+{
     //Pulls $EDITOR from environment variables
     if editor.is_none() {
         let editor = env::var_os("EDITOR");
@@ -119,15 +126,18 @@ fn modify_file(editing: String, file: &str, editor: Option<String>) {
             std::process::exit(64);
         }
     }
-    let editor = editor.unwrap();
-    let path = get_home() + "/.config/raven/themes/" + &editing + "/" + file;
+    let editor = editor.unwrap().into();
+    let path = get_home() + "/.config/raven/themes/" + &editing.into() + "/" + &file.into();
     println!("Started {:?} at {}", editor, path);
     Command::new(editor)
         .arg(path)
         .spawn()
         .expect("Couldn't run $EDITOR");
 }
-fn show_menu(menu_command: String) {
+fn show_menu<N>(menu_command: N)
+where
+    N: Into<String>,
+{
     let mut theme_list = String::new();
     let mut entries = get_themes();
     entries.sort_by(|a, b| a.cmp(&b));
@@ -143,7 +153,7 @@ fn show_menu(menu_command: String) {
     }
     let output = Command::new("sh")
         .arg("-c")
-        .arg(String::from("echo '") + &theme_list + "' | " + &menu_command)
+        .arg(String::from("echo '") + &theme_list + "' | " + &menu_command.into())
         .output()
         .expect("Failed to run menu.");
     let int_output = String::from_utf8_lossy(&output.stdout);
