@@ -65,11 +65,15 @@ impl Theme {
         println!("Loaded all options for theme {}", self.name);
     }
     /// Edits the value of a key in hjson files
-    fn edit_hjson<N>(&self, file: N, pat: &str, value: &str)
+    fn edit_hjson<N,S,T>(&self, file: N, pat: S, value: T)
     where
         N: Into<String>,
+        S: Into<String>,
+        T: Into<String>,
     {
         let file = &file.into();
+        let pat = &pat.into();
+        let value = &value.into();
         let mut finals = String::new();
         if fs::metadata(file).is_ok() {
             let mut pre = String::new();
@@ -220,10 +224,10 @@ impl Theme {
             .read_to_string(&mut value)
             .unwrap();
         if fs::metadata(&path1).is_ok() {
-            self.edit_hjson(path1 + "/settings.json", pattern, &value)
+            self.edit_hjson(path1 + "/settings.json", pattern, value.as_str())
         }
         if fs::metadata(&path2).is_ok() {
-            self.edit_hjson(path2 + "/settings.json", pattern, &value)
+            self.edit_hjson(path2 + "/settings.json", pattern, value)
         }
     }
     pub fn load_sublt<N>(&self, stype: N)
@@ -252,7 +256,7 @@ impl Theme {
         } else if stype == "st_subltheme" {
             pattern = "\"theme\": ";
         }
-        self.edit_hjson(path + "/Preferences.sublime-settings", &pattern, &value)
+        self.edit_hjson(path + "/Preferences.sublime-settings", pattern, value)
     }
 
     pub fn load_ncm(&self) {
