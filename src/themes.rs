@@ -53,6 +53,7 @@ impl Theme {
                 "st_tmtheme" => self.load_sublt("st_tmtheme"),
                 "st_scs" => self.load_sublt("st_scs"),
                 "st_subltheme" => self.load_sublt("st_subltheme"),
+                "vscode" => self.load_vscode(),
                 "|" => {}
                 _ => println!("Unknown option"),
             };
@@ -62,6 +63,63 @@ impl Theme {
             i += 1;
         }
         println!("Loaded all options for theme {}", self.name);
+    }
+    /// Edits the value of a key in hjson files
+    fn edit_hjson<N,S,T>(&self, file: N, pat: S, value: T)
+    where
+        N: Into<String>,
+        S: Into<String>,
+        T: Into<String>,
+    {
+        let file = &file.into();
+        let pat = &pat.into();
+        let value = &value.into();
+        let mut finals = String::new();
+        if fs::metadata(file).is_ok() {
+            let mut pre = String::new();
+            fs::File::open(file)
+                .expect("Couldn't open hjson file")
+                .read_to_string(&mut pre)
+                .unwrap();
+            let mut patfound = false;
+            for line in pre.lines() {
+                if line.contains(pat) {
+                    patfound = true;
+                    if line.ends_with(",") {
+                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\","
+                    } else {
+                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
+                    }
+                } else if line.ends_with("}") && !patfound {
+                    finals =
+                        finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
+                } else {
+                    finals = finals + "\n" + line;
+                }
+            }
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(file)
+                .expect("Couldn't open hjson file")
+                .write_all(finals.trim().as_bytes())
+                .unwrap();
+        } else {
+            finals = finals
+                + "{\n    "
+                + pat
+                + "\""
+                + &value
+                + "\"\n}";
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(file)
+                .expect("Couldn't open hjson file")
+                .write_all(finals.as_bytes())
+                .unwrap();
+        }
     }
     pub fn load_rofi(&self) {
         if fs::metadata(get_home() + "/.config/rofi").is_err() {
@@ -149,18 +207,40 @@ impl Theme {
             .unwrap();
         Command::new("dunst").spawn().expect("Failed to run dunst");
     }
-
+    pub fn load_vscode(&self) {
+        let path1 = get_home() + "/.config/Code/User";
+        let path2 = get_home() + "/.config/Code - OSS/User";
+        if fs::metadata(&path1).is_err() && fs::metadata(&path2).is_err() {
+            println!(
+                "Couldn't find neither .config/Code nor .config/Code - OSS. Do you have VSCode installed? \
+                Skipping."
+            );
+            return;
+        }
+        let pattern = "\"workbench.colorTheme\": ";
+        let mut value = String::new();
+        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/vscode")
+            .unwrap()
+            .read_to_string(&mut value)
+            .unwrap();
+        if fs::metadata(&path1).is_ok() {
+            self.edit_hjson(path1 + "/settings.json", pattern, value.as_str())
+        }
+        if fs::metadata(&path2).is_ok() {
+            self.edit_hjson(path2 + "/settings.json", pattern, value)
+        }
+    }
     pub fn load_sublt<N>(&self, stype: N)
     where
         N: Into<String>,
     {
         let stype = &stype.into();
-        let sublpath = "/.config/sublime-text-3/Packages/User";
-        if fs::metadata(get_home() + &sublpath).is_err() {
+        let path = get_home() + "/.config/sublime-text-3/Packages/User";
+        if fs::metadata(&path).is_err() {
             println!(
                 "Couldn't find {}. Do you have sublime text 3 installed? \
                  Skipping.",
-                get_home() + &sublpath
+                &path
             );
             return;
         }
@@ -170,62 +250,13 @@ impl Theme {
             .unwrap()
             .read_to_string(&mut value)
             .unwrap();
-        let mut pat = "";
+        let mut pattern = "";
         if stype == "st_tmtheme" || stype == "st_scs" {
-            pat = "\"color_scheme\": ";
+            pattern = "\"color_scheme\": ";
         } else if stype == "st_subltheme" {
-            pat = "\"theme\": ";
+            pattern = "\"theme\": ";
         }
-        if fs::metadata(get_home() + sublpath + "/Preferences.sublime-settings").is_ok() {
-            let mut pre = String::new();
-            fs::File::open(get_home() + sublpath + "/Preferences.sublime-settings")
-                .expect("Couldn't open sublime settings")
-                .read_to_string(&mut pre)
-                .unwrap();
-            let mut finals = String::new();
-            let mut patfound = false;
-            for line in pre.lines() {
-                if line.contains(pat) {
-                    patfound = true;
-                    if line.ends_with(",") {
-                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\","
-                    } else {
-                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
-                    }
-                } else if line.ends_with("}") && !patfound {
-                    finals =
-                        finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
-                } else {
-                    finals = finals + "\n" + line;
-                }
-            }
-            OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(get_home() + sublpath + "/Preferences.sublime-settings")
-                .expect("Couldn't open sublime settings")
-                .write_all(finals.trim().as_bytes())
-                .unwrap();
-        } else {
-            let mut finals = String::new();
-            finals = finals
-                + "// Settings in here override those in \
-                   \"Default/Preferences.sublime-settings\",\n\
-                   // and are overridden in turn by syntax-specific settings.\n\
-                   {\n    "
-                + pat
-                + "\""
-                + &value
-                + "\"\n}";
-            OpenOptions::new()
-                .create(true)
-                .write(true)
-                .open(get_home() + sublpath + "/Preferences.sublime-settings")
-                .expect("Couldn't open sublime settings")
-                .write_all(finals.as_bytes())
-                .unwrap();
-        }
+        self.edit_hjson(path + "/Preferences.sublime-settings", pattern, value)
     }
 
     pub fn load_ncm(&self) {
