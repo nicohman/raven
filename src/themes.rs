@@ -590,3 +590,9 @@ pub fn get_themes() -> Vec<String> {
         .map(|x| proc_path(x.unwrap()))
         .collect::<Vec<String>>()
 }
+/// Changes a key-value option
+pub fn key_value<N, S, T>(key: N, value: S, theme: T) where N : Into<String>, S: Into<String>, T: Into<String> {
+    let mut store = load_store(theme.into());
+    store.kv.insert(key.into(), serde_json::Value::String(value.into()));
+    up_theme(store);
+}

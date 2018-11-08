@@ -36,6 +36,7 @@ fn interpet_args() {
         Modify { name, editor } => modify_file(conf.editing, name, editor),
         Delete { name } => del_theme(name),
         Edit { name } => edit(name),
+        Key {key, value} => key_value(key, value, conf.editing),
         ManageO { .. } => {
             match r {
                 ManageO(Export { name }) => {
