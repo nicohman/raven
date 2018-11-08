@@ -1,5 +1,6 @@
 use crate::config::*;
 use proc_path;
+use serde_json::value::{Map, Value};
 use std::{
     env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write, os::unix::fs::OpenOptionsExt,
     process::Command,
@@ -14,6 +15,8 @@ pub struct ThemeStore {
     pub screenshot: String,
     #[serde(default = "default_desc")]
     pub description: String,
+    #[serde(default)]
+    pub kv: Map<String, Value>,
 }
 /// Structure that holds all methods and data for individual themes.
 pub struct Theme {
@@ -22,10 +25,50 @@ pub struct Theme {
     pub monitor: i32,
     pub enabled: Vec<String>,
     pub order: Vec<String>,
+    pub kv: Map<String, Value>,
 }
 
 /// Methods for a loaded theme
 impl Theme {
+    /// Loads options held within theme.json key-value storage
+    pub fn load_kv(&self) {
+        for (k, v) in &self.kv {
+            self.load_k(k.as_str(), v.as_str().unwrap());
+        }
+    }
+    /// Loads a single key option
+    pub fn load_k<N>(&self, k: N, v: N)
+    where
+        N: Into<String>,
+    {
+        let (k, v) = (k.into(), v.into());
+        match k.as_str() {
+            "sm_tmtheme" => self.load_sublt("st_tmtheme", v.as_str()),
+            "st_scs" => self.load_sublt("st_scs", v.as_str()),
+            "st_subltheme" => self.load_sublt("st_subltheme", v.as_str()),
+            "vscode" => self.load_vscode(v.as_str()),
+            _ => println!("Unrecognized key {}", k),
+        }
+        println!("Loaded key option {}", k);
+    }
+    /// Converts old single-string file options into key-value storage
+    pub fn convert_single<N>(&self, name: N)
+    where
+        N: Into<String>,
+    {
+        let key = name.into();
+        let mut value = String::new();
+        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/" + &key)
+            .expect("Couldn't open file")
+            .read_to_string(&mut value)
+            .unwrap();
+        let mut store = load_store(self.name.clone());
+        store.kv.insert(key.clone(),serde_json::Value::String(value.clone().trim().to_string()));
+        store.options = store.options.iter().filter(|x| x.as_str() != key.as_str()).map(|x|x.to_owned()).collect();
+        up_theme(store);
+        println!("Converted option {} to new key-value system", key);
+        self.load_k(key, value);
+    }
     /// Iterates through options and loads them with submethods
     pub fn load_all(&self) {
         let opt = &self.options;
@@ -50,10 +93,10 @@ impl Theme {
                 "lemonbar" => self.load_lemon(),
                 "openbox" => self.load_openbox(),
                 "dunst" => self.load_dunst(),
-                "st_tmtheme" => self.load_sublt("st_tmtheme"),
-                "st_scs" => self.load_sublt("st_scs"),
-                "st_subltheme" => self.load_sublt("st_subltheme"),
-                "vscode" => self.load_vscode(),
+                "st_tmtheme" => self.convert_single("st_tmtheme"),
+                "st_scs" => self.convert_single("st_scs"),
+                "st_subltheme" => self.convert_single("st_subltheme"),
+                "vscode" => self.convert_single("vscode"),
                 "|" => {}
                 _ => println!("Unknown option"),
             };
@@ -62,10 +105,11 @@ impl Theme {
             }
             i += 1;
         }
+        self.load_kv();
         println!("Loaded all options for theme {}", self.name);
     }
     /// Edits the value of a key in hjson files
-    fn edit_hjson<N,S,T>(&self, file: N, pat: S, value: T)
+    fn edit_hjson<N, S, T>(&self, file: N, pat: S, value: T)
     where
         N: Into<String>,
         S: Into<String>,
@@ -106,12 +150,7 @@ impl Theme {
                 .write_all(finals.trim().as_bytes())
                 .unwrap();
         } else {
-            finals = finals
-                + "{\n    "
-                + pat
-                + "\""
-                + &value
-                + "\"\n}";
+            finals = finals + "{\n    " + pat + "\"" + &value + "\"\n}";
             OpenOptions::new()
                 .create(true)
                 .write(true)
@@ -207,7 +246,10 @@ impl Theme {
             .unwrap();
         Command::new("dunst").spawn().expect("Failed to run dunst");
     }
-    pub fn load_vscode(&self) {
+    pub fn load_vscode<N>(&self, value: N)
+    where
+        N: Into<String>,
+    {
         let path1 = get_home() + "/.config/Code/User";
         let path2 = get_home() + "/.config/Code - OSS/User";
         if fs::metadata(&path1).is_err() && fs::metadata(&path2).is_err() {
@@ -218,11 +260,7 @@ impl Theme {
             return;
         }
         let pattern = "\"workbench.colorTheme\": ";
-        let mut value = String::new();
-        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/vscode")
-            .unwrap()
-            .read_to_string(&mut value)
-            .unwrap();
+        let value = value.into();
         if fs::metadata(&path1).is_ok() {
             self.edit_hjson(path1 + "/settings.json", pattern, value.as_str())
         }
@@ -230,7 +268,7 @@ impl Theme {
             self.edit_hjson(path2 + "/settings.json", pattern, value)
         }
     }
-    pub fn load_sublt<N>(&self, stype: N)
+    pub fn load_sublt<N>(&self, stype: N, value: N)
     where
         N: Into<String>,
     {
@@ -245,11 +283,7 @@ impl Theme {
             return;
         }
 
-        let mut value = String::new();
-        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/" + &stype)
-            .unwrap()
-            .read_to_string(&mut value)
-            .unwrap();
+        let value = value.into();
         let mut pattern = "";
         if stype == "st_tmtheme" || stype == "st_scs" {
             pattern = "\"color_scheme\": ";
@@ -464,6 +498,7 @@ where
             enabled: vec![],
             screenshot: default_screen(),
             description: default_desc(),
+            kv: Map::new(),
         };
         let st = serde_json::to_string(&stdef).unwrap();
         file.write_all(st.as_bytes()).unwrap();
@@ -486,6 +521,7 @@ where
         enabled: cur_theme.enabled,
         screenshot: cur_st.screenshot,
         description: cur_st.description,
+        kv: Map::new(),
     };
     let mut already_used = false;
     for opt in &new_themes.options {
@@ -519,6 +555,7 @@ where
         enabled: cur_theme.enabled,
         screenshot: cur_st.screenshot,
         description: cur_st.description,
+        kv: Map::new(),
     };
     let mut found = false;
     let mut i = 0;
