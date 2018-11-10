@@ -43,7 +43,7 @@ impl Theme {
     {
         let (k, v) = (k.into(), v.into());
         match k.as_str() {
-            "sm_tmtheme" => self.load_sublt("st_tmtheme", v.as_str()),
+            "st_tmtheme" => self.load_sublt("st_tmtheme", v.as_str()),
             "st_scs" => self.load_sublt("st_scs", v.as_str()),
             "st_subltheme" => self.load_sublt("st_subltheme", v.as_str()),
             "vscode" => self.load_vscode(v.as_str()),
@@ -283,7 +283,16 @@ impl Theme {
             return;
         }
 
-        let value = value.into();
+        let mut value = value.into();
+        if value.starts_with("sublt/") {
+            value = value.trim_start_matches("sublt/").to_string();
+            fs::copy(
+                get_home() + "/.config/raven/themes/" + &self.name + "/sublt/" + &value,
+                path.clone() + "/" + &value
+            )
+            .expect("Couldn't overwrite sublt theme");
+        }
+
         let mut pattern = "";
         if stype == "st_tmtheme" || stype == "st_scs" {
             pattern = "\"color_scheme\": ";

@@ -138,4 +138,6 @@ With the cycle command you can control a daemon that will automatically cycle th
 
 ### Sublime Text 3
 
-Plain text containing the absolute (allowing `$HOME` and `~`) or relative path (To the sublime config directory. Usually `~/.config/sublime-text-3/`) of a .tmTheme, .sublime-color-scheme or .sublime-theme file.
+Plain text containing `sublt/<filename>.<extension>` (which you must create on your theme folder) or the name of an already installed theme (e.g `DA.sublime-theme`)
+
+Extensions: st_tmtheme (`.tmTheme`), st_scs (`.sublime-color-scheme`) and st_subltheme (`.sublime-theme`)
