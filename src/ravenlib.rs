@@ -14,6 +14,7 @@ pub mod config {
     use crate::themes::*;
     use dirs::home_dir;
     use std::{fs, fs::OpenOptions, io::Read, io::Write};
+    use serde_json::value::Map;
     /// Returns home directory as string
     pub fn get_home() -> String {
         return String::from(home_dir().unwrap().to_str().unwrap());
@@ -142,6 +143,7 @@ pub mod config {
             options: options,
             screenshot: default_screen(),
             description: default_desc(),
+            kv: Map::new()
         };
         OpenOptions::new()
             .create(true)
@@ -185,6 +187,7 @@ pub mod config {
                     monitor: conf.monitors,
                     enabled: theme_info.enabled,
                     order: conf.polybar,
+                    kv: theme_info.kv
                 };
                 Ok(new_theme)
             } else {

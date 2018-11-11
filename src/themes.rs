@@ -1,5 +1,6 @@
 use crate::config::*;
 use proc_path;
+use serde_json::value::{Map, Value};
 use std::{
     env, fs, fs::DirEntry, fs::OpenOptions, io, io::Read, io::Write, os::unix::fs::OpenOptionsExt,
     process::Command,
@@ -14,6 +15,8 @@ pub struct ThemeStore {
     pub screenshot: String,
     #[serde(default = "default_desc")]
     pub description: String,
+    #[serde(default)]
+    pub kv: Map<String, Value>,
 }
 /// Structure that holds all methods and data for individual themes.
 pub struct Theme {
@@ -22,10 +25,50 @@ pub struct Theme {
     pub monitor: i32,
     pub enabled: Vec<String>,
     pub order: Vec<String>,
+    pub kv: Map<String, Value>,
 }
 
 /// Methods for a loaded theme
 impl Theme {
+    /// Loads options held within theme.json key-value storage
+    pub fn load_kv(&self) {
+        for (k, v) in &self.kv {
+            self.load_k(k.as_str(), v.as_str().unwrap());
+        }
+    }
+    /// Loads a single key option
+    pub fn load_k<N>(&self, k: N, v: N)
+    where
+        N: Into<String>,
+    {
+        let (k, v) = (k.into(), v.into());
+        match k.as_str() {
+            "st_tmtheme" => self.load_sublt("st_tmtheme", v.as_str()),
+            "st_scs" => self.load_sublt("st_scs", v.as_str()),
+            "st_subltheme" => self.load_sublt("st_subltheme", v.as_str()),
+            "vscode" => self.load_vscode(v.as_str()),
+            _ => println!("Unrecognized key {}", k),
+        }
+        println!("Loaded key option {}", k);
+    }
+    /// Converts old single-string file options into key-value storage
+    pub fn convert_single<N>(&self, name: N)
+    where
+        N: Into<String>,
+    {
+        let key = name.into();
+        let mut value = String::new();
+        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/" + &key)
+            .expect("Couldn't open file")
+            .read_to_string(&mut value)
+            .unwrap();
+        let mut store = load_store(self.name.clone());
+        store.kv.insert(key.clone(),serde_json::Value::String(value.clone().trim().to_string()));
+        store.options = store.options.iter().filter(|x| x.as_str() != key.as_str()).map(|x|x.to_owned()).collect();
+        up_theme(store);
+        println!("Converted option {} to new key-value system", key);
+        self.load_k(key, value);
+    }
     /// Iterates through options and loads them with submethods
     pub fn load_all(&self) {
         let opt = &self.options;
@@ -50,9 +93,10 @@ impl Theme {
                 "lemonbar" => self.load_lemon(),
                 "openbox" => self.load_openbox(),
                 "dunst" => self.load_dunst(),
-                "st_tmtheme" => self.load_sublt("st_tmtheme"),
-                "st_scs" => self.load_sublt("st_scs"),
-                "st_subltheme" => self.load_sublt("st_subltheme"),
+                "st_tmtheme" => self.convert_single("st_tmtheme"),
+                "st_scs" => self.convert_single("st_scs"),
+                "st_subltheme" => self.convert_single("st_subltheme"),
+                "vscode" => self.convert_single("vscode"),
                 "|" => {}
                 _ => println!("Unknown option"),
             };
@@ -61,7 +105,60 @@ impl Theme {
             }
             i += 1;
         }
+        self.load_kv();
         println!("Loaded all options for theme {}", self.name);
+    }
+    /// Edits the value of a key in hjson files
+    fn edit_hjson<N, S, T>(&self, file: N, pat: S, value: T)
+    where
+        N: Into<String>,
+        S: Into<String>,
+        T: Into<String>,
+    {
+        let file = &file.into();
+        let pat = &pat.into();
+        let value = &value.into();
+        let mut finals = String::new();
+        if fs::metadata(file).is_ok() {
+            let mut pre = String::new();
+            fs::File::open(file)
+                .expect("Couldn't open hjson file")
+                .read_to_string(&mut pre)
+                .unwrap();
+            let mut patfound = false;
+            for line in pre.lines() {
+                if line.contains(pat) {
+                    patfound = true;
+                    if line.ends_with(",") {
+                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\","
+                    } else {
+                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
+                    }
+                } else if line.ends_with("}") && !patfound {
+                    finals =
+                        finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
+                } else {
+                    finals = finals + "\n" + line;
+                }
+            }
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(file)
+                .expect("Couldn't open hjson file")
+                .write_all(finals.trim().as_bytes())
+                .unwrap();
+        } else {
+            finals = finals + "{\n    " + pat + "\"" + &value + "\"\n}";
+            OpenOptions::new()
+                .create(true)
+                .write(true)
+                .open(file)
+                .expect("Couldn't open hjson file")
+                .write_all(finals.as_bytes())
+                .unwrap();
+        }
     }
     pub fn load_rofi(&self) {
         if fs::metadata(get_home() + "/.config/rofi").is_err() {
@@ -149,83 +246,60 @@ impl Theme {
             .unwrap();
         Command::new("dunst").spawn().expect("Failed to run dunst");
     }
-
-    pub fn load_sublt<N>(&self, stype: N)
+    pub fn load_vscode<N>(&self, value: N)
+    where
+        N: Into<String>,
+    {
+        let path1 = get_home() + "/.config/Code/User";
+        let path2 = get_home() + "/.config/Code - OSS/User";
+        if fs::metadata(&path1).is_err() && fs::metadata(&path2).is_err() {
+            println!(
+                "Couldn't find neither .config/Code nor .config/Code - OSS. Do you have VSCode installed? \
+                Skipping."
+            );
+            return;
+        }
+        let pattern = "\"workbench.colorTheme\": ";
+        let value = value.into();
+        if fs::metadata(&path1).is_ok() {
+            self.edit_hjson(path1 + "/settings.json", pattern, value.as_str())
+        }
+        if fs::metadata(&path2).is_ok() {
+            self.edit_hjson(path2 + "/settings.json", pattern, value)
+        }
+    }
+    pub fn load_sublt<N>(&self, stype: N, value: N)
     where
         N: Into<String>,
     {
         let stype = &stype.into();
-        let sublpath = "/.config/sublime-text-3/Packages/User";
-        if fs::metadata(get_home() + &sublpath).is_err() {
+        let path = get_home() + "/.config/sublime-text-3/Packages/User";
+        if fs::metadata(&path).is_err() {
             println!(
                 "Couldn't find {}. Do you have sublime text 3 installed? \
                  Skipping.",
-                get_home() + &sublpath
+                &path
             );
             return;
         }
 
-        let mut value = String::new();
-        fs::File::open(get_home() + "/.config/raven/themes/" + &self.name + "/" + &stype)
-            .unwrap()
-            .read_to_string(&mut value)
-            .unwrap();
-        let mut pat = "";
+        let mut value = value.into();
+        if value.starts_with("sublt/") {
+            value = value.trim_start_matches("sublt/").to_string();
+            fs::copy(
+                get_home() + "/.config/raven/themes/" + &self.name + "/sublt/" + &value,
+                path.clone() + "/" + &value
+            )
+            .expect("Couldn't overwrite sublt theme");
+        }
+
+        let mut pattern = "";
         if stype == "st_tmtheme" || stype == "st_scs" {
-            pat = "\"color_scheme\": ";
+            pattern = "\"color_scheme\": ";
         } else if stype == "st_subltheme" {
-            pat = "\"theme\": ";
+            pattern = "\"theme\": ";
         }
-        if fs::metadata(get_home() + sublpath + "/Preferences.sublime-settings").is_ok() {
-            let mut pre = String::new();
-            fs::File::open(get_home() + sublpath + "/Preferences.sublime-settings")
-                .expect("Couldn't open sublime settings")
-                .read_to_string(&mut pre)
-                .unwrap();
-            let mut finals = String::new();
-            let mut patfound = false;
-            for line in pre.lines() {
-                if line.contains(pat) {
-                    patfound = true;
-                    if line.ends_with(",") {
-                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\","
-                    } else {
-                        finals = finals + "\n" + "    " + pat + "\"" + &value + "\""
-                    }
-                } else if line.ends_with("}") && !patfound {
-                    finals =
-                        finals + "," + "\n" + "    " + pat + "\"" + &value + "\"" + "\n" + line;
-                } else {
-                    finals = finals + "\n" + line;
-                }
-            }
-            OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open(get_home() + sublpath + "/Preferences.sublime-settings")
-                .expect("Couldn't open sublime settings")
-                .write_all(finals.trim().as_bytes())
-                .unwrap();
-        } else {
-            let mut finals = String::new();
-            finals = finals
-                + "// Settings in here override those in \
-                   \"Default/Preferences.sublime-settings\",\n\
-                   // and are overridden in turn by syntax-specific settings.\n\
-                   {\n    "
-                + pat
-                + "\""
-                + &value
-                + "\"\n}";
-            OpenOptions::new()
-                .create(true)
-                .write(true)
-                .open(get_home() + sublpath + "/Preferences.sublime-settings")
-                .expect("Couldn't open sublime settings")
-                .write_all(finals.as_bytes())
-                .unwrap();
-        }
+        self.edit_hjson(path + "/Preferences.sublime-settings", pattern, value)
     }
 
     pub fn load_ncm(&self) {
@@ -433,6 +507,7 @@ where
             enabled: vec![],
             screenshot: default_screen(),
             description: default_desc(),
+            kv: Map::new(),
         };
         let st = serde_json::to_string(&stdef).unwrap();
         file.write_all(st.as_bytes()).unwrap();
@@ -455,6 +530,7 @@ where
         enabled: cur_theme.enabled,
         screenshot: cur_st.screenshot,
         description: cur_st.description,
+        kv: Map::new(),
     };
     let mut already_used = false;
     for opt in &new_themes.options {
@@ -488,6 +564,7 @@ where
         enabled: cur_theme.enabled,
         screenshot: cur_st.screenshot,
         description: cur_st.description,
+        kv: Map::new(),
     };
     let mut found = false;
     let mut i = 0;
@@ -521,4 +598,10 @@ pub fn get_themes() -> Vec<String> {
         .into_iter()
         .map(|x| proc_path(x.unwrap()))
         .collect::<Vec<String>>()
+}
+/// Changes a key-value option
+pub fn key_value<N, S, T>(key: N, value: S, theme: T) where N : Into<String>, S: Into<String>, T: Into<String> {
+    let mut store = load_store(theme.into());
+    store.kv.insert(key.into(), serde_json::Value::String(value.into()));
+    up_theme(store);
 }

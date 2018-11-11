@@ -35,6 +35,11 @@ pub enum Raven {
     Add { option: String, name: String },
     #[structopt(name = "rm", about = "Remove an option from edited theme")]
     Rm { name: String },
+    #[structopt(name = "key", about = "Add a key-value option")]
+    Key {
+        key: String,
+        value: String
+    },
     #[structopt(name = "edit", about = "Edit theme")]
     Edit { name: String },
     #[structopt(name = "menu", about = "Show theme menu")]

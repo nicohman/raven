@@ -49,6 +49,8 @@ The following packages are required for their relevant options:
 
 + [Sublime Text 3](https://www.sublimetext.com/) : `st_tmtheme`, `st_scs` and `st_subltheme`
 
++ [VSCode](https://github.com/Microsoft/vscode) : `vscode`
+
 * New option suggestions are very welcome!
 
 You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
@@ -119,6 +121,7 @@ To configure a theme, start off by creating it with `raven new [theme]`. You'll 
 + [st_tmtheme](#sublime-text-3)
 + [st_scs](#sublime-text-3)
 + [st_subltheme](#sublime-text-3)
++ vscode (Plain text containing the name of an already installed VSCode theme.)
 
 base_ files allow splitting the config from the cosmetics on the options with [base_]
 For example if you place an i3 config named base\_i3 in ~/.config/raven, the contents of i3 for a theme will be appended to it instead of being run on their own. This allows you to have a central config for keyboard shortcuts, and have cosmetics only be stored in the theme.
@@ -135,4 +138,6 @@ With the cycle command you can control a daemon that will automatically cycle th
 
 ### Sublime Text 3
 
-Plain text containing the absolute (allowing `$HOME` and `~`) or relative path (To the sublime config directory. Usually `~/.config/sublime-text-3/`) of a .tmTheme, .sublime-color-scheme or .sublime-theme file.
+Plain text containing `sublt/<filename>.<extension>` (which you must create on your theme folder) or the name of an already installed theme (e.g `DA.sublime-theme`)
+
+Extensions: st_tmtheme (`.tmTheme`), st_scs (`.sublime-color-scheme`) and st_subltheme (`.sublime-theme`)
