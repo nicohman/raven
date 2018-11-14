@@ -198,6 +198,10 @@ pub mod config {
             Err("Theme does not exist")
         }
     }
+    /// Loads all themes
+    pub fn load_themes() -> Vec<Theme> {
+        get_themes().iter().map(|x| load_theme(x.as_str())).filter(|x| x.is_ok()).map(|x| x.unwrap()).collect::<Vec<Theme>>()
+    }
     /// Retrieve config settings from file
     pub fn get_config() -> Config {
         let mut conf = String::new();
