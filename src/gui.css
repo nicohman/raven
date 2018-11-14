@@ -1,0 +1,9 @@
+* {
+  color: #FF00FF;
+}
+#themes-list {
+  border: 1px solid #FF00FF;
+}
+#main {
+  flex-direction: row;
+}
