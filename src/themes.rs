@@ -19,6 +19,7 @@ pub struct ThemeStore {
     pub kv: Map<String, Value>,
 }
 /// Structure that holds all methods and data for individual themes.
+#[derive(Clone)]
 pub struct Theme {
     pub name: String,
     pub options: Vec<String>,

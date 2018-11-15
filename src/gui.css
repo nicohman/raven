@@ -27,6 +27,13 @@
   width:60em;
   background-color: #073642;
   border: 1px solid #2aa198;
+  flex-direction: row;
+  justify-content: flex-end;
+}
+#bottom-bar > {
+  margin-left: 10px;
+  width:10em;
+  margin-right: 10px;
 }
 #main {
   flex-direction: row;
