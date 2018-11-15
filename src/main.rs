@@ -29,8 +29,7 @@ fn interpet_args() {
     let conf = get_config();
     match r {
         Load { theme } => {
-            clear_prev();
-            run_theme(load_theme(theme).unwrap());
+            run_theme(&load_theme(theme).unwrap());
         }
         New { name } => new_theme(name),
         Modify { name, editor } => modify_file(conf.editing, name, editor),
@@ -83,7 +82,6 @@ fn interpet_args() {
         }
         Info {} => print_info(conf.editing),
         Refresh {} => {
-            clear_prev();
             refresh_theme(conf.last);
         }
         Install { name, force } => download_theme(name, force),
@@ -159,12 +157,11 @@ where
         .expect("Failed to run menu.");
     let int_output = String::from_utf8_lossy(&output.stdout);
     if int_output.len() > 0 {
-        clear_prev();
         let theme = load_theme(int_output.trim());
         if theme.is_err() {
             println!("Could not load in theme data. Does it exist?");
         } else {
-            run_theme(theme.unwrap());
+            run_theme(&theme.unwrap());
         }
     } else {
         println!("Theme not selected.");

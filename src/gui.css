@@ -1,43 +1,56 @@
 * {
   color: #93a1a1;
 }
+
 #themes-list {
   border: 1px solid #2aa198;
-  width:20em;
+  width: 20em;
   background-color: #1a7770;
 }
+
 .theme-item {
   height: 4em;
   border: 1px solid #2aa198;
-  padding:1em;
+  padding: 1em;
   background-color: #073642;
 }
+
+.selected {
+  background-color: #657b83;
+  height: 4em;
+}
+
 #cur-theme {
   border: 1px solid #2aa198;
   background-color: #002b36;
-  width:60em;
+  width: 60em;
 }
+
 #right {
-  width:60em;
+  width: 60em;
   border: 1px solid #2aa198;
   flex-direction: column;
 }
+
 #bottom-bar {
   height: 5em;
-  width:60em;
+  width: 60em;
   background-color: #073642;
   border: 1px solid #2aa198;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
-#bottom-bar > {
+
+#bottom-bar> {
   margin-left: 10px;
-  width:10em;
+  width: 10em;
   margin-right: 10px;
 }
+
 #main {
   flex-direction: row;
 }
+
 /*:root {
 	--main-bg: #073642;
 	--text: #93a1a1;

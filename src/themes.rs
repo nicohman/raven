@@ -483,7 +483,7 @@ where
 {
     let last = last.into();
     if last.chars().count() > 0 {
-        run_theme(load_theme(last.trim()).unwrap());
+        run_theme(&load_theme(last.trim()).unwrap());
     } else {
         println!("No last theme saved. Cannot refresh.");
     }
@@ -584,11 +584,12 @@ where
     }
 }
 /// Run/refresh a loaded Theme
-pub fn run_theme(new_theme: Theme) {
+pub fn run_theme(new_theme: &Theme) {
+    clear_prev();
     new_theme.load_all();
     // Updates the 'last loaded theme' information for later use by raven refresh
     let mut conf = get_config();
-    conf.last = new_theme.name;
+    conf.last = new_theme.name.clone();
     up_config(conf);
 }
 /// Get all themes
