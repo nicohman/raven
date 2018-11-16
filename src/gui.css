@@ -14,10 +14,18 @@
   padding: 1em;
   background-color: #073642;
 }
-
-.selected {
+.option-list {
+  text-align: left;
+}
+.theme-image {
+  width:40em;
+  height:30em;
+}
+.theme-item .selected {
   background-color: #657b83;
   height: 4em;
+  border: 1px solid #2aa198;
+  padding: 1em;
 }
 
 #cur-theme {

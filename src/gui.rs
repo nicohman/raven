@@ -8,13 +8,15 @@ use std::collections::BTreeSet;
 use std::sync::Arc;
 use themes::*;
 use NodeType::*;
+use std::fs;
 struct DataModel {
     config: Config,
     themes: Vec<Theme>,
     selected_theme: Option<usize>,
+    text: Vec<TextId>
 }
 impl Layout for DataModel {
-    fn layout(&self, _: WindowInfo<Self>) -> Dom<Self> {
+    fn layout(&self, info: WindowInfo<Self>) -> Dom<Self> {
         let mut set = vec![On::MouseUp];
         let buts = self
             .themes
@@ -23,7 +25,7 @@ impl Layout for DataModel {
             .map(|(i, theme)| NodeData {
                 node_type: NodeType::Label(theme.name.clone()),
                 classes: if self.selected_theme == Some(i) {
-                    vec!["selected".into(), "theme-item".into()]
+                    vec!["theme-item".into(), "selected".into()]
                 } else {
                     vec!["theme-item".into()]
                 },
@@ -39,10 +41,12 @@ impl Layout for DataModel {
             .with_callback(On::MouseUp, Callback(load_callback));
         let mut cur_theme = Dom::new(Div).with_id("cur-theme");
         if self.selected_theme.is_some() {
-            cur_theme = cur_theme.with_child(Dom::new(Label(format!(
-                "{} selected",
-                self.themes[self.selected_theme.unwrap()].name
-            ))));
+            let theme = &self.themes[self.selected_theme.unwrap()];
+
+            let name = Dom::new(Label(theme.name.clone())).with_class("theme-name");
+            let option_list = Dom::new(Text(self.text[self.selected_theme.unwrap()])).with_class("option-list");
+            let screenshot = Dom::new(Image(info.resources.get_image(theme.name.clone()).unwrap())).with_class("theme-image");
+            cur_theme = cur_theme.with_child(name).with_child(screenshot).with_child(option_list);
         } else {
             cur_theme = cur_theme.with_child(Dom::new(Label(format!("No Theme selected"))));
         }
@@ -100,14 +104,28 @@ fn main() {
     }
     println!("Starting GUI");
     let mut themes = load_themes();
-    let app = App::new(
+    let mut app = App::new(
         DataModel {
             config: get_config(),
             selected_theme: Some(0),
             themes: load_themes(),
+            text:vec![]
         },
         AppConfig::default(),
     );
+    let font_id = FontId::BuiltinFont("sans-serif".into());
+    let test = concat!(env!("CARGO_MANIFEST_DIR"), "/src/test.png");
+    for theme in themes {
+        let mut fd = fs::File::open(test).unwrap();
+        app.add_image(theme.name.clone(), &mut fd, ImageType::Png);
+        let option_string = theme.options.iter().fold("".to_string(), |acc, opt| {
+            acc + &format!("- {}\n", opt)
+        });
+        let text_id = app.add_text_cached(option_string, &font_id,PixelValue::px(10.0), None);
+        app.app_state.data.modify(|state| {
+            state.text.push(text_id);
+        });
+    }
     let css = Css::override_native(include_str!(CSS_PATH!())).unwrap();
     let window = Window::new(WindowCreateOptions::default(), css).unwrap();
     app.run(window).unwrap();
