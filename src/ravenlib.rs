@@ -187,7 +187,9 @@ pub mod config {
                     monitor: conf.monitors,
                     enabled: theme_info.enabled,
                     order: conf.polybar,
-                    kv: theme_info.kv
+                    kv: theme_info.kv,
+                    screenshot: theme_info.screenshot,
+                    description: theme_info.description
                 };
                 Ok(new_theme)
             } else {

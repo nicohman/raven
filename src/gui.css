@@ -18,8 +18,8 @@
   text-align: left;
 }
 .theme-image {
-  width:40em;
-  height:30em;
+  max-width:40em;
+  max-height:30em;
 }
 .theme-item .selected {
   background-color: #657b83;

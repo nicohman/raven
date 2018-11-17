@@ -27,6 +27,8 @@ pub struct Theme {
     pub enabled: Vec<String>,
     pub order: Vec<String>,
     pub kv: Map<String, Value>,
+    pub screenshot: String,
+    pub description: String
 }
 
 /// Methods for a loaded theme
