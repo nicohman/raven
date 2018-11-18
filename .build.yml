@@ -4,6 +4,7 @@ packages:
   - cmake
   - fontconfig
   - rsync
+  - python3
 secrets:
   - 89991b16-705b-4276-9178-bfc81c7fdd28
 environment:
