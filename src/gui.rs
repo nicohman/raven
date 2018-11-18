@@ -6,20 +6,20 @@ use config::*;
 use ravenlib::*;
 use std::cell::RefCell;
 use std::collections::BTreeSet;
-use std::sync::Arc;
-use themes::*;
-use NodeType::*;
 use std::fs;
 use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
+use std::sync::Arc;
+use themes::*;
+use NodeType::*;
 struct DataModel {
     config: Config,
     themes: Vec<Theme>,
     selected_theme: Option<usize>,
     text: Vec<TextId>,
-    screenshots: Vec<Option<String>>
+    screenshots: Vec<Option<String>>,
 }
 impl Layout for DataModel {
     fn layout(&self, info: WindowInfo<Self>) -> Dom<Self> {
@@ -42,6 +42,9 @@ impl Layout for DataModel {
             .with_id("themes-list")
             .with_callback(On::MouseUp, Callback(select_theme));
         let new_but = Dom::new(Label(format!("new")));
+        let delete_button = Button::with_label("Delete Theme")
+            .dom()
+            .with_callback(On::MouseUp, Callback(delete_callback));
         let load_button = Button::with_label("Load Theme")
             .dom()
             .with_callback(On::MouseUp, Callback(load_callback));
@@ -49,15 +52,15 @@ impl Layout for DataModel {
         if self.selected_theme.is_some() {
             let theme = &self.themes[self.selected_theme.unwrap()];
             let name = Dom::new(Label(theme.name.clone())).with_class("theme-name");
-            let option_list = Dom::new(Text(self.text[self.selected_theme.unwrap()])).with_class("option-list");
+            let option_list =
+                Dom::new(Text(self.text[self.selected_theme.unwrap()])).with_class("option-list");
             cur_theme = cur_theme.with_child(name);
             if theme.screenshot != default_screen() && theme.screenshot.len() > 0 {
-                println!("Has image");
-                if info.resources.has_image(theme.name.clone()){
-                    println!("Making image");
-                    let screenshot = Dom::new(Image(info.resources.get_image(theme.name.clone()).unwrap())).with_class("theme-image");
+                if info.resources.has_image(theme.name.clone()) {
+                    let screenshot =
+                        Dom::new(Image(info.resources.get_image(theme.name.clone()).unwrap()))
+                            .with_class("theme-image");
                     cur_theme = cur_theme.with_child(screenshot);
-
                 }
             }
             cur_theme = cur_theme.with_child(option_list);
@@ -67,7 +70,8 @@ impl Layout for DataModel {
         let mut bottom_bar = Dom::new(Div)
             .with_id("bottom-bar")
             .with_child(new_but)
-            .with_child(load_button);
+            .with_child(load_button)
+            .with_child(delete_button);
         let right = Dom::new(Div)
             .with_id("right")
             .with_child(cur_theme)
@@ -91,6 +95,22 @@ fn load_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>)
         UpdateScreen::DontRedraw
     }
 }
+fn delete_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>) -> UpdateScreen {
+    let mut up = UpdateScreen::DontRedraw;
+    state.data.modify(|data| {
+        if data.selected_theme.is_some() {
+            println!(
+                "Deleting theme {}",
+                data.themes[data.selected_theme.unwrap()].name
+            );
+            del_theme(data.themes[data.selected_theme.unwrap()].name.as_str());
+            data.themes.remove(data.selected_theme.unwrap());
+            data.selected_theme = Some(0);
+            up = UpdateScreen::Redraw
+        }
+    });
+    up
+}
 fn select_theme(
     app_state: &mut AppState<DataModel>,
     event: WindowEvent<DataModel>,
@@ -104,17 +124,19 @@ fn select_theme(
         if selected.is_some() && selected != state.selected_theme {
             state.selected_theme = selected;
             should_redraw = UpdateScreen::Redraw;
-            println!("Changed")
         }
-        println!("selected item: {:?}", state.selected_theme);
+        println!("Selected theme: {:?}", state.selected_theme);
     });
     should_redraw
 }
 fn main() {
-    if fs::metadata(get_home()+"/.config/raven/screenshots").is_err() {
-        let cres = fs::create_dir(get_home()+"/.config/raven/screenshots");
+    if fs::metadata(get_home() + "/.config/raven/screenshots").is_err() {
+        let cres = fs::create_dir(get_home() + "/.config/raven/screenshots");
         if cres.is_err() {
-            println!("Failed to init screenshot directory. Error Message: {:?}\n", cres);
+            println!(
+                "Failed to init screenshot directory. Error Message: {:?}\n",
+                cres
+            );
         }
     }
     macro_rules! CSS_PATH {
@@ -128,19 +150,24 @@ fn main() {
         DataModel {
             config: get_config(),
             selected_theme: Some(0),
-            themes: load_themes(),
-            text:vec![],
-            screenshots: vec![]
+            themes: themes.clone(),
+            text: vec![],
+            screenshots: vec![],
         },
         AppConfig::default(),
     );
     let font_id = FontId::BuiltinFont("sans-serif".into());
     for (i, theme) in themes.iter().enumerate() {
         if theme.screenshot != default_screen() {
-            let mut buf : Vec<u8> = vec![];
-            let spath = get_home()+"/.config/raven/screenshots/"+&theme.screenshot.clone().replace("/","").replace(":","");
+            let mut buf: Vec<u8> = vec![];
+            let spath = get_home()
+                + "/.config/raven/screenshots/"
+                + &theme.screenshot.clone().replace("/", "").replace(":", "");
             if fs::metadata(&spath).is_err() {
-                print!("Downloading {}'s screenshot from {}", theme.name, theme.screenshot);
+                print!(
+                    "Downloading {}'s screenshot from {}",
+                    theme.name, theme.screenshot
+                );
                 let mut fd = fs::File::create(&spath).unwrap();
                 let res = reqwest::get(&theme.screenshot.clone());
                 if res.is_ok() {
@@ -160,17 +187,21 @@ fn main() {
                 let mut fd = fs::File::open(&spath).unwrap();
                 fd.read_to_end(&mut buf).expect("Couldn't read file");
             }
-            let ires = app.add_image(theme.name.clone(), &mut buf.as_slice(), ImageType::GuessImageFormat);
-            println!("{:?}", ires);
+            let ires = app.add_image(
+                theme.name.clone(),
+                &mut buf.as_slice(),
+                ImageType::GuessImageFormat,
+            );
             app.app_state.data.modify(|state| {
-                state.screenshots.resize(i+1, Some(String::new()));
+                state.screenshots.resize(i + 1, Some(String::new()));
                 state.screenshots[i] = Some(theme.name.clone());
             });
         }
-        let option_string = theme.options.iter().fold("".to_string(), |acc, opt| {
-            acc + &format!("- {}\n", opt)
-        });
-        let text_id = app.add_text_cached(option_string, &font_id,PixelValue::px(10.0), None);
+        let option_string = theme
+            .options
+            .iter()
+            .fold("Options Added: \n".to_string(), |acc, opt| acc + &format!("- {}\n", opt));
+        let text_id = app.add_text_cached(option_string, &font_id, PixelValue::px(10.0), None);
         app.app_state.data.modify(|state| {
             state.text.push(text_id);
         });
