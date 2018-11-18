@@ -1,0 +1,21 @@
+image: archlinux
+packages:
+  - cargo
+  - cmake
+  - fontconfig
+  - rsync
+secrets:
+  - 89991b16-705b-4276-9178-bfc81c7fdd28
+environment:
+  deploy: nicohman@demenses.net
+sources:
+  - https://git.sr.ht/~nicohman/raven
+tasks:
+  - build: |
+      cd raven
+      cargo build --release
+  - deploy: |
+      cd raven/target/release
+      sshopts="ssh -o StrictHostKeyChecking=no"
+      rsync --rsh="$sshopts" -rP raven $deploy:/home/nicohman/ravenserver/public/static/raven-nightly
+      rsync --rsh="$sshopts" -rP ravend $deploy:/home/nicohman/ravenserver/public/static/ravend-nightly
