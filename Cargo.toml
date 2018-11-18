@@ -11,6 +11,9 @@ license="GPL-3.0"
 [[bin]]
 name = "raven"
 path = "src/main.rs"
+[[bin]]
+name = "ravend"
+path = "src/ravend.rs"
 [lib]
 name = "ravenlib"
 path = "src/ravenlib.rs"
