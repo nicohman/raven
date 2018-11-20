@@ -11,6 +11,7 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
+use azul::window_state::WindowSize;
 use std::sync::Arc;
 use themes::*;
 use NodeType::*;
@@ -149,13 +150,14 @@ fn main() {
     let mut app = App::new(
         DataModel {
             config: get_config(),
-            selected_theme: Some(0),
+            selected_theme: None,
             themes: themes.clone(),
             text: vec![],
             screenshots: vec![],
         },
         AppConfig::default(),
     );
+    
     let font_id = FontId::BuiltinFont("sans-serif".into());
     for (i, theme) in themes.iter().enumerate() {
         if theme.screenshot != default_screen() {
@@ -197,16 +199,26 @@ fn main() {
                 state.screenshots[i] = Some(theme.name.clone());
             });
         }
+        let mut text = String::new();
+        if theme.description != default_desc() && theme.description.len() > 0 {
+            text =  text + "Description:\n\n" + theme.description.as_str()+"\n\n";
+        }
+        text += "Options Added: \n\n";
         let option_string = theme
             .options
             .iter()
-            .fold("Options Added: \n".to_string(), |acc, opt| acc + &format!("- {}\n", opt));
+            .fold(text, |acc, opt| acc + &format!("- {}\n", opt));
         let text_id = app.add_text_cached(option_string, &font_id, PixelValue::px(10.0), None);
         app.app_state.data.modify(|state| {
             state.text.push(text_id);
         });
     }
+    let mut create_options = WindowCreateOptions::default();
+    let mut size = WindowSize::default();
+    size.dimensions = LogicalSize::new(860.0, 600.0);
+    create_options.state.title = String::from("graven");
+    create_options.state.size = size;
     let css = Css::override_native(include_str!(CSS_PATH!())).unwrap();
-    let window = Window::new(WindowCreateOptions::default(), css).unwrap();
+    let window = Window::new(create_options, css).unwrap();
     app.run(window).unwrap();
 }

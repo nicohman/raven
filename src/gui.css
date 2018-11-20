@@ -4,56 +4,56 @@
 
 #themes-list {
   border: 1px solid #2aa198;
-  width: 20em;
+  width: 280px;
   background-color: #1a7770;
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .theme-item {
-  height: 4em;
+  height: 65px;
   border: 1px solid #2aa198;
-  padding: 1em;
+  padding: 16px;
   background-color: #073642;
 }
 .option-list {
   text-align: left;
-  font-size:16px;
-  margin-left:4em;
+  font-size:12px;
+  margin-left:64px;
 }
 .theme-image {
-  max-width:40em;
-  margin-left: 2em;
-  max-height:30em;
-  margin-bottom: 2em;
+  max-width:500px;
+  margin-left: 32px;
+  max-height:400px;
+  margin-bottom: 32px;
 }
 .theme-name {
-  height: 4em;
+  height: 64px;
   text-align: left;
-  margin-left: 3em;
-  font-size: 32px;
+  margin-left: 48px;
+  font-size: 20px;
 }
 .theme-item .selected {
   background-color: #657b83;
-  height: 4em;
+  height: 64px;
   border: 1px solid #2aa198;
-  padding: 1em;
+  padding: 16px;
 }
 
 #cur-theme {
   border: 1px solid #2aa198;
   background-color: #002b36;
-  width: 60em;
+  width: 700px;
 }
 
 #right {
-  width: 60em;
+  width: 700px;
   border: 1px solid #2aa198;
   flex-direction: column;
 }
 
 #bottom-bar {
-  height: 5em;
-  width: 60em;
+  height: 80px;
+  width: 700px;
   background-color: #073642;
   border: 1px solid #2aa198;
   flex-direction: row;
@@ -62,12 +62,13 @@
 
 #bottom-bar > {
   margin-left: 10px;
-  width: 10em;
+  width: 160px;
   margin-right: 10px;
 }
 
 #main {
   flex-direction: row;
+  width:860px;
 }
 
 /*:root {
