@@ -56,7 +56,7 @@
   width: 700px;
   background-color: #073642;
   border: 1px solid #2aa198;
-  flex-direction: row;
+  flex-direction: row-reverse;
   justify-content: flex-end;
 }
 
@@ -64,6 +64,7 @@
   margin-left: 10px;
   width: 160px;
   margin-right: 10px;
+  background-color: #002b36;
 }
 
 #main {

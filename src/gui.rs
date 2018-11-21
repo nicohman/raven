@@ -1,6 +1,7 @@
 extern crate azul;
 extern crate ravenlib;
 extern crate reqwest;
+use azul::window_state::WindowSize;
 use azul::{prelude::*, widgets::button::Button};
 use config::*;
 use ravenlib::*;
@@ -11,7 +12,6 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
-use azul::window_state::WindowSize;
 use std::sync::Arc;
 use themes::*;
 use NodeType::*;
@@ -42,13 +42,15 @@ impl Layout for DataModel {
             .collect::<Dom<Self>>()
             .with_id("themes-list")
             .with_callback(On::MouseUp, Callback(select_theme));
-        let new_but = Dom::new(Label(format!("new")));
         let delete_button = Button::with_label("Delete Theme")
             .dom()
             .with_callback(On::MouseUp, Callback(delete_callback));
         let load_button = Button::with_label("Load Theme")
             .dom()
             .with_callback(On::MouseUp, Callback(load_callback));
+        let refresh_button = Button::with_label("Refresh Last Theme")
+            .dom()
+            .with_callback(On::MouseUp, Callback(refresh_callback));
         let mut cur_theme = Dom::new(Div).with_id("cur-theme");
         if self.selected_theme.is_some() {
             let theme = &self.themes[self.selected_theme.unwrap()];
@@ -70,7 +72,7 @@ impl Layout for DataModel {
         }
         let mut bottom_bar = Dom::new(Div)
             .with_id("bottom-bar")
-            .with_child(new_but)
+            .with_child(refresh_button)
             .with_child(load_button)
             .with_child(delete_button);
         let right = Dom::new(Div)
@@ -111,6 +113,10 @@ fn delete_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel
         }
     });
     up
+}
+fn refresh_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>) -> UpdateScreen {
+    refresh_theme(state.data.lock().unwrap().config.last.clone());
+    UpdateScreen::DontRedraw
 }
 fn select_theme(
     app_state: &mut AppState<DataModel>,
@@ -157,7 +163,7 @@ fn main() {
         },
         AppConfig::default(),
     );
-    
+
     let font_id = FontId::BuiltinFont("sans-serif".into());
     for (i, theme) in themes.iter().enumerate() {
         if theme.screenshot != default_screen() {
@@ -201,7 +207,7 @@ fn main() {
         }
         let mut text = String::new();
         if theme.description != default_desc() && theme.description.len() > 0 {
-            text =  text + "Description:\n\n" + theme.description.as_str()+"\n\n";
+            text = text + "Description:\n\n" + theme.description.as_str() + "\n\n";
         }
         text += "Options Added: \n\n";
         let option_string = theme
