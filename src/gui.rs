@@ -12,6 +12,7 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::SeekFrom;
 use std::io::Write;
+use std::process::Command;
 use std::sync::Arc;
 use themes::*;
 use NodeType::*;
@@ -52,6 +53,9 @@ impl Layout for DataModel {
             .dom()
             .with_callback(On::MouseUp, Callback(refresh_callback));
         let mut cur_theme = Dom::new(Div).with_id("cur-theme");
+        let online_button = Button::with_label("View on ThemeHub")
+            .dom()
+            .with_callback(On::MouseUp, Callback(online_callback));
         if self.selected_theme.is_some() {
             let theme = &self.themes[self.selected_theme.unwrap()];
             let name = Dom::new(Label(theme.name.clone())).with_class("theme-name");
@@ -72,6 +76,7 @@ impl Layout for DataModel {
         }
         let mut bottom_bar = Dom::new(Div)
             .with_id("bottom-bar")
+            .with_child(online_button)
             .with_child(refresh_button)
             .with_child(load_button)
             .with_child(delete_button);
@@ -114,8 +119,23 @@ fn delete_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel
     });
     up
 }
-fn refresh_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>) -> UpdateScreen {
+fn refresh_callback(
+    state: &mut AppState<DataModel>,
+    event: WindowEvent<DataModel>,
+) -> UpdateScreen {
     refresh_theme(state.data.lock().unwrap().config.last.clone());
+    UpdateScreen::DontRedraw
+}
+fn online_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>) -> UpdateScreen {
+    let data = state.data.lock().unwrap();
+    if data.selected_theme.is_some() {
+        let host = data.config.host.clone();
+        let uri = host + "/themes/view/" + &data.themes[data.selected_theme.unwrap()].name;
+        let output = Command::new("xdg-open")
+            .arg(uri)
+            .output()
+            .expect("Couldn't use xdg-open to launch website");
+    }
     UpdateScreen::DontRedraw
 }
 fn select_theme(
