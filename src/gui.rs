@@ -256,7 +256,7 @@ fn main() {
     }
     let mut create_options = WindowCreateOptions::default();
     let mut size = WindowSize::default();
-    size.dimensions = LogicalSize::new(860.0, 600.0);
+    size.dimensions = LogicalSize::new(980.0, 600.0);
     create_options.state.title = String::from("graven");
     create_options.state.size = size;
     let css = Css::override_native(include_str!(CSS_PATH!())).unwrap();
