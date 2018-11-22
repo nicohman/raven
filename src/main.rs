@@ -1,9 +1,6 @@
 use std::{env, fs, fs::DirEntry, io, process::Command};
 extern crate dirs;
 extern crate ravenlib;
-extern crate serde;
-extern crate serde_derive;
-extern crate serde_json;
 #[macro_use]
 extern crate structopt;
 use structopt::StructOpt;

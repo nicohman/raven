@@ -1,6 +1,6 @@
 # Raven
 
-A theme manager for linux, currently focusing on i3. Supports multiple different configuration files, and is fast and portable.
+A theme manager for linux, currently focusing on i3. Supports multiple different configuration files, and is fast and portable. Upstream now hosted at [sr.ht](https://git.sr.ht/~nicohman/raven).
 
 ### Example
 
@@ -8,7 +8,11 @@ A theme manager for linux, currently focusing on i3. Supports multiple different
 
 ## ThemeHub
 
-Raven supports installing themes from and publishing themes to [ThemeHub](https://demenses.net), or your own instance of [ravenserver](https://github.com/nicohman/ravenserver). I encourage everyone to share their themes and rices there!
+Raven supports installing themes from and publishing themes to [ThemeHub](https://demenses.net), or your own instance of [ravenserver](https://git.sr.ht/~nicohman/ravenserver). I encourage everyone to share their themes and rices there!
+
+## Contributing and Issues
+
+I'm very happy to take pull requests and bug reports, but I'm migrating to [sr.ht](http://sr.ht), and I would prefer it if you would put issues into the [todo.sr.ht tracker](https://todo.sr.ht/~nicohman/raven) and send patches/pull requests to the [mailing list](https://lists.sr.ht/~nicohman/raven). There's a guide for submitting patches [here](https://man.sr.ht/git.sr.ht/send-email.md). Issues and pull requests will still remain open, but sr.ht is preferred.
 
 ## Installation
 
@@ -17,7 +21,7 @@ You can install from [crates.io](https://crates.io/crates/raventhemer) by runnin
 
 Run:
 
-`git clone https://github.com/nicohman/raven.git && cd raven`
+`git clone https://git.sr.ht/~nicohman/raven && cd raven`
 
 `cargo install --path . --force`
 

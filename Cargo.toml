@@ -2,7 +2,7 @@
 name = "raventhemer"
 version = "1.5.0"
 authors = ["nicohman <nicohman@demenses.net>"]
-repository="https://github.com/nicohman/raven"
+repository="https://git.sr.ht/~nicohman/raven"
 description="A theme manager and switcher for desktop linux"
 readme="README.md"
 keywords=["linux","cli","customization"]
@@ -12,19 +12,10 @@ license="GPL-3.0"
 name = "raven"
 path = "src/main.rs"
 [[bin]]
-name = "graven"
-path = "src/gui.rs"
-[lib]
-name = "ravenlib"
-path = "src/ravenlib.rs"
+name = "ravend"
+path = "src/ravend.rs"
 [dependencies]
-azul = { git = "https://github.com/maps4print/azul", rev = "7aa88a06c5da9d44052d7f71992042f0161b149e" }
+ravenlib = "1.0.0"
 time = "0.1"
-serde = "1.0.66"
-serde_derive = "1.0"
-serde_json = "1.0"
-tar = "0.4"
-reqwest = "0.9.5"
-multipart = "0.15.2"
 structopt = "0.2.10"
 dirs = "1.0"
