@@ -1,6 +1,6 @@
 # Raven
 
-A theme manager for linux, currently focusing on i3. Supports multiple different configuration files, and is fast and portable. Upstream now hosted at [sr.ht](https://git.sr.ht/~nicohman/raven).
+A theme manager for linux, currently focusing on i3. Supports multiple different configuration files, and is fast and portable. Upstream now hosted at [sr.ht](https://git.sr.ht/~nicohman/raven). You can find [ravenlib](https://git.sr.ht/~nicohman/ravenlib) there as well, if you're looking to add to or build off of the core features.
 
 ### Example
 
