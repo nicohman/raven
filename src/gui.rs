@@ -44,18 +44,19 @@ impl Layout for DataModel {
             .with_id("themes-list")
             .with_callback(On::MouseUp, Callback(select_theme));
         let delete_button = Button::with_label("Delete Theme")
-            .dom()
+            .dom().with_class("bot-button")
             .with_callback(On::MouseUp, Callback(delete_callback));
         let load_button = Button::with_label("Load Theme")
-            .dom()
+            .dom().with_class("bot-button")
             .with_callback(On::MouseUp, Callback(load_callback));
         let refresh_button = Button::with_label("Refresh Last Theme")
-            .dom()
+            .dom().with_class("bot-button")
             .with_callback(On::MouseUp, Callback(refresh_callback));
         let mut cur_theme = Dom::new(Div).with_id("cur-theme");
         let online_button = Button::with_label("View on ThemeHub")
-            .dom()
+            .dom().with_class("bot-button")
             .with_callback(On::MouseUp, Callback(online_callback));
+        let open_button = Button::with_label("View in File Manager").dom().with_class("bot-button").with_callback(On::MouseUp, Callback(open_callback));
         if self.selected_theme.is_some() {
             let theme = &self.themes[self.selected_theme.unwrap()];
             let name = Dom::new(Label(theme.name.clone())).with_class("theme-name");
@@ -77,6 +78,7 @@ impl Layout for DataModel {
         let mut bottom_bar = Dom::new(Div)
             .with_id("bottom-bar")
             .with_child(online_button)
+            .with_child(open_button)
             .with_child(refresh_button)
             .with_child(load_button)
             .with_child(delete_button);
@@ -102,6 +104,19 @@ fn load_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>)
     } else {
         UpdateScreen::DontRedraw
     }
+}
+fn open_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>) -> UpdateScreen {
+    let data = state.data.lock().unwrap();
+    if data.selected_theme.is_some() {
+        let path = get_home()+"/.config/raven/themes/"+&data.themes[data.selected_theme.unwrap()].name;
+        println!("{}",path);
+        let output = Command::new("xdg-open")
+            .arg(path)
+            .spawn()
+            .expect("Couldn't use xdg-open to open folder");
+    }
+    UpdateScreen::DontRedraw
+
 }
 fn delete_callback(state: &mut AppState<DataModel>, event: WindowEvent<DataModel>) -> UpdateScreen {
     let mut up = UpdateScreen::DontRedraw;

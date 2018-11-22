@@ -60,11 +60,13 @@
   justify-content: flex-end;
 }
 
-#bottom-bar > {
+.bot-button {
   margin-left: 10px;
-  width: 320px;
+  width: 100px;
+  height: 60px;
   margin-right: 10px;
   background-color: #002b36;
+  font-size:15px;
 }
 
 #main {
