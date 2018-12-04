@@ -57,7 +57,7 @@ The following packages are required for their relevant options:
 
 * New option suggestions are very welcome!
 
-You can also download a prebuilt binary from [here](https://github.com/nicohman/raven/releases)
+You can also download a(possibly outdated prebuilt binary from [here](https://github.com/nicohman/raven/releases), or a binary built from the latest git commit at [my website](https://demenses.net/downloads).
 
 ## Usage
 
