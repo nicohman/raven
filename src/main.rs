@@ -10,7 +10,7 @@ use dirs::home_dir;
 use ravenlib::{config::*, daemon::*, ravenserver::*, themes::*};
 fn main() {
     if check_init() {
-        init();
+        init().unwrap();
     }
     interpet_args();
 }
@@ -20,36 +20,42 @@ fn interpet_args() {
     use Cycle::*;
     use Manage::*;
     use Raven::*;
-    check_themes();
+    check_themes().unwrap();
     //If a theme may be changing, kill the previous theme's processes. Currently only polybar
     //and lemonbar
-    let conf = get_config();
+    let conf = get_config().unwrap();
     match r {
         Load { theme } => {
-            run_theme(&load_theme(theme).unwrap());
+            run_theme(&load_theme(theme).unwrap()).unwrap();
         }
-        New { name } => new_theme(name),
+        New { name } => new_theme(name).unwrap(),
         Modify { name, editor } => modify_file(conf.editing, name, editor),
-        Delete { name } => del_theme(name),
-        Edit { name } => edit(name),
-        Key {key, value} => key_value(key, value, conf.editing),
+        Delete { name } => del_theme(name).unwrap(),
+        Edit { name } => {
+            edit(name).unwrap();
+        },
+        Key {key, value} => key_value(key, value, conf.editing).unwrap(),
         ManageO { .. } => {
             match r {
                 ManageO(Export { name }) => {
-                    export(name, check_tmp());
+                    export(name, check_tmp()).unwrap();
                 }
-                ManageO(Import { name }) => import(name),
-                ManageO(Publish { name }) => upload_theme(name),
-                ManageO(Create { name, pass1, pass2 }) => create_user(name, pass1, pass2),
-                ManageO(Unpublish { name }) => unpublish_theme(name),
-                ManageO(Login { name, pass }) => login_user(name, pass),
-                ManageO(Logout {}) => logout(),
-                ManageO(DUser { pass }) => delete_user(pass),
+                ManageO(Import { name }) => import(name).unwrap(),
+                ManageO(Publish { name }) => {
+                    upload_theme(name).unwrap();
+                },
+                ManageO(Create { name, pass1, pass2 }) => {
+                    create_user(name, pass1, pass2).unwrap();
+                },
+                ManageO(Unpublish { name }) => unpublish_theme(name).unwrap(),
+                ManageO(Login { name, pass }) => login_user(name, pass).unwrap(),
+                ManageO(Logout {}) => logout().unwrap(),
+                ManageO(DUser { pass }) => delete_user(pass).unwrap(),
                 _ => println!("Well, this shouldn't be happening"),
             };
         }
         CycleD { .. } => {
-            let running = check_daemon();
+            let running = check_daemon().unwrap();
             match r {
                 CycleD(Check {}) => {
                     if running {
@@ -60,14 +66,14 @@ fn interpet_args() {
                 }
                 CycleD(Start {}) => {
                     if !running {
-                        start_daemon();
+                        start_daemon().unwrap();
                     } else {
                         println!("Cycle daemon already running.");
                     }
                 }
                 CycleD(Stop {}) => {
                     if running {
-                        stop_daemon();
+                        stop_daemon().unwrap();
                     } else {
                         println!("Cycle daemon not running.");
                     }
@@ -79,11 +85,13 @@ fn interpet_args() {
         }
         Info {} => print_info(conf.editing),
         Refresh {} => {
-            refresh_theme(conf.last);
+            refresh_theme(conf.last).unwrap();
         }
-        Install { name, force } => download_theme(name, force),
-        Add { name, option } => add_to_theme(conf.editing, option, name),
-        Rm { name } => rm_from_theme(conf.editing, name),
+        Install { name, force } => {
+            download_theme(name, force).unwrap();
+        },
+        Add { name, option } => add_to_theme(conf.editing, option, name).unwrap(),
+        Rm { name } => rm_from_theme(conf.editing, name).unwrap(),
         Menu {} => show_menu(conf.menu_command),
     };
 }
@@ -105,7 +113,7 @@ where
         println!("{}", option);
     }
     println!("All themes: ");
-    let themes = get_themes();
+    let themes = get_themes().unwrap();
     for t in themes {
         println!("{}", t);
     }
@@ -135,7 +143,7 @@ where
     N: Into<String>,
 {
     let mut theme_list = String::new();
-    let mut entries = get_themes();
+    let mut entries = get_themes().unwrap();
     entries.sort_by(|a, b| a.cmp(&b));
     let mut i = 0;
     for entry in entries {
@@ -158,7 +166,7 @@ where
         if theme.is_err() {
             println!("Could not load in theme data. Does it exist?");
         } else {
-            run_theme(&theme.unwrap());
+            run_theme(&theme.unwrap()).unwrap();
         }
     } else {
         println!("Theme not selected.");
