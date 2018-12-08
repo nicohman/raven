@@ -4,11 +4,14 @@ extern crate ravenlib;
 #[macro_use]
 extern crate structopt;
 use structopt::StructOpt;
+#[macro_use]
+extern crate human_panic;
 pub mod args;
 use args::*;
 use dirs::home_dir;
 use ravenlib::{config::*, daemon::*, ravenserver::*, themes::*};
 fn main() {
+    setup_panic!();
     if check_init() {
         init().unwrap();
     }
