@@ -10,6 +10,10 @@ A theme manager for linux, currently focusing on i3. Supports multiple different
 
 Raven supports installing themes from and publishing themes to [ThemeHub](https://demenses.net), or your own instance of [ravenserver](https://git.sr.ht/~nicohman/ravenserver). I encourage everyone to share their themes and rices there!
 
+## Wiki
+
+There's a wiki [here](https://man.sr.ht/~nicohman/raven), which provides more in-depth information on raven and the surrounding projects.
+
 ## Contributing and Issues
 
 I'm very happy to take pull requests and bug reports, but I'm migrating to [sr.ht](http://sr.ht), and I would prefer it if you would put issues into the [todo.sr.ht tracker](https://todo.sr.ht/~nicohman/raven) and send patches/pull requests to the [mailing list](https://lists.sr.ht/~nicohman/raven). There's a guide for submitting patches [here](https://man.sr.ht/git.sr.ht/send-email.md). Issues and pull requests will still remain open, but sr.ht is preferred.
