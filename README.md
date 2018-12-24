@@ -1,4 +1,4 @@
-# Raven
+# Raven [![](https://img.shields.io/crates/v/raventhemer.svg?style=flat-square)](https://crates.io/crates/raventhemer) [![builds.sr.ht status](https://builds.sr.ht/~nicohman/raven.svg)](https://builds.sr.ht/~nicohman/raven?)
 
 A theme manager for linux, currently focusing on i3. Supports multiple different configuration files, and is fast and portable. Upstream now hosted at [sr.ht](https://git.sr.ht/~nicohman/raven). You can find [ravenlib](https://git.sr.ht/~nicohman/ravenlib) there as well, if you're looking to add to or build off of the core features.
 
@@ -14,9 +14,13 @@ Raven supports installing themes from and publishing themes to [ThemeHub](https:
 
 There's a wiki [here](https://man.sr.ht/~nicohman/raven), which provides more in-depth information on raven and the surrounding projects.
 
-## Contributing and Issues
+## Getting Started
 
-I'm very happy to take pull requests and bug reports, but I'm migrating to [sr.ht](http://sr.ht), and I would prefer it if you would put issues into the [todo.sr.ht tracker](https://todo.sr.ht/~nicohman/raven) and send patches/pull requests to the [mailing list](https://lists.sr.ht/~nicohman/raven). There's a guide for submitting patches [here](https://man.sr.ht/git.sr.ht/send-email.md). Issues and pull requests will still remain open, but sr.ht is preferred.
+If you just want to get going, you can install raven from [crates.io](https://crates.io/crates/raventhemer) with
+
+`cargo install raventhemer`
+
+If you don't want to install cargo, you can download a binary built from the latest git commit [here](https://demenses,net/downloads).
 
 ## Installation
 
