@@ -11,6 +11,7 @@ use args::*;
 use dirs::home_dir;
 use ravenlib::{config::*, daemon::*, ravenserver::*, themes::*};
 fn main() {
+    #[cfg(not(debug_assertions))]
     setup_panic!();
     if check_init() {
         init().unwrap();
