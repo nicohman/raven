@@ -2,6 +2,9 @@ use std::{env, fs, fs::DirEntry, io, process::Command};
 extern crate dirs;
 extern crate ravenlib;
 #[macro_use]
+extern crate log;
+extern crate clap_verbosity_flag;
+#[macro_use]
 extern crate structopt;
 use structopt::StructOpt;
 #[macro_use]
@@ -29,53 +32,139 @@ fn interpet_args() {
     //and lemonbar
     let conf = get_config().unwrap();
     match r {
-        Load { theme } => {
+        Load { theme, verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
             run_theme(&load_theme(theme).unwrap()).unwrap();
         }
-        New { name } => new_theme(name).unwrap(),
-        Modify { name, editor } => modify_file(conf.editing, name, editor),
-        Delete { name } => del_theme(name).unwrap(),
-        Edit { name } => {
+        New { name, verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            new_theme(name).unwrap()
+        }
+        Modify {
+            name,
+            editor,
+            verbose,
+        } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            modify_file(conf.editing, name, editor)
+        }
+        Delete { name, verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            del_theme(name).unwrap()
+        }
+        Edit { name, verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
             edit(name).unwrap();
-        },
-        Key {key, value} => key_value(key, value, conf.editing).unwrap(),
+        }
+        Key {
+            key,
+            value,
+            verbose,
+        } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            key_value(key, value, conf.editing).unwrap()
+        }
         ManageO { .. } => {
             match r {
-                ManageO(Export { name }) => {
+                ManageO(Export { name, verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
                     export(name, check_tmp()).unwrap();
                 }
-                ManageO(Import { name }) => import(name).unwrap(),
-                ManageO(Publish { name }) => {
+                ManageO(Import { name, verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
+                    import(name).unwrap()
+                }
+                ManageO(Publish { name, verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
                     upload_theme(name).unwrap();
-                },
-                ManageO(Create { name, pass1, pass2 }) => {
+                }
+                ManageO(Create {
+                    name,
+                    pass1,
+                    pass2,
+                    verbose,
+                }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
                     create_user(name, pass1, pass2).unwrap();
-                },
-                ManageO(Unpublish { name }) => unpublish_theme(name).unwrap(),
-                ManageO(Login { name, pass }) => login_user(name, pass).unwrap(),
-                ManageO(Logout {}) => logout().unwrap(),
-                ManageO(DUser { pass }) => delete_user(pass).unwrap(),
+                }
+                ManageO(Unpublish { name, verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
+                    unpublish_theme(name).unwrap()
+                }
+                ManageO(Login {
+                    name,
+                    pass,
+                    verbose,
+                }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
+                    login_user(name, pass).unwrap()
+                }
+                ManageO(Logout { verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
+                    logout().unwrap()
+                }
+                ManageO(DUser { pass, verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
+                    delete_user(pass).unwrap()
+                }
                 _ => println!("Well, this shouldn't be happening"),
             };
         }
         CycleD { .. } => {
             let running = check_daemon().unwrap();
             match r {
-                CycleD(Check {}) => {
+                CycleD(Check { verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
                     if running {
                         println!("Cycle daemon running.");
                     } else {
                         println!("Cycle daemon not running.");
                     }
                 }
-                CycleD(Start {}) => {
+                CycleD(Start { verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
                     if !running {
                         start_daemon().unwrap();
                     } else {
                         println!("Cycle daemon already running.");
                     }
                 }
-                CycleD(Stop {}) => {
+                CycleD(Stop { verbose }) => {
+                    verbose
+                        .setup_env_logger("raven")
+                        .expect("Couldn't set up logger");
                     if running {
                         stop_daemon().unwrap();
                     } else {
@@ -87,16 +176,50 @@ fn interpet_args() {
                 }
             }
         }
-        Info {} => print_info(conf.editing),
-        Refresh {} => {
+        Info { verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            print_info(conf.editing)
+        }
+        Refresh { verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
             refresh_theme(conf.last).unwrap();
         }
-        Install { name, force } => {
+        Install {
+            name,
+            force,
+            verbose,
+        } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
             download_theme(name, force).unwrap();
-        },
-        Add { name, option } => add_to_theme(conf.editing, option, name).unwrap(),
-        Rm { name } => rm_from_theme(conf.editing, name).unwrap(),
-        Menu {} => show_menu(conf.menu_command),
+        }
+        Add {
+            name,
+            option,
+            verbose,
+        } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            add_to_theme(conf.editing, option, name).unwrap()
+        }
+        Rm { name, verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            rm_from_theme(conf.editing, name).unwrap()
+        }
+        Menu { verbose } => {
+            verbose
+                .setup_env_logger("raven")
+                .expect("Couldn't set up logger");
+            show_menu(conf.menu_command)
+        }
     };
 }
 
@@ -105,6 +228,7 @@ where
     N: Into<String>,
 {
     let editing = editing.into();
+    info!("Reading in themes");
     let options = fs::read_dir(get_home() + "/.config/raven/themes/" + &editing)
         .expect("Couldn't read themes")
         .collect::<Vec<io::Result<DirEntry>>>()
@@ -130,13 +254,13 @@ where
     if editor.is_none() {
         let editor = env::var_os("EDITOR");
         if editor.is_none() {
-            println!("Could not fetch $EDITOR from your OS.");
+            error!("Could not fetch $EDITOR from your OS.");
             std::process::exit(64);
         }
     }
     let editor = editor.unwrap().into();
     let path = get_home() + "/.config/raven/themes/" + &editing.into() + "/" + &file.into();
-    println!("Started {:?} at {}", editor, path);
+    info!("Started editor {:?} at {}", editor, path);
     Command::new(editor)
         .arg(path)
         .spawn()
@@ -159,16 +283,19 @@ where
             i += 1;
         }
     }
+    info!("Starting menu command");
     let output = Command::new("sh")
         .arg("-c")
         .arg(String::from("echo '") + &theme_list + "' | " + &menu_command.into())
         .output()
         .expect("Failed to run menu.");
+    info!("Menu command stopped. Parsing into theme name.");
     let int_output = String::from_utf8_lossy(&output.stdout);
     if int_output.len() > 0 {
+        info!("loading selected theme");
         let theme = load_theme(int_output.trim());
         if theme.is_err() {
-            println!("Could not load in theme data. Does it exist?");
+            error!("Could not load in theme data. Does it exist?");
         } else {
             run_theme(&theme.unwrap()).unwrap();
         }
