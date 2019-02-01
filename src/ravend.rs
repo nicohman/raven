@@ -1,11 +1,10 @@
 use std::fs;
 extern crate time;
-use std::env;
+extern crate dirs;
 use std::fs::DirEntry;
 use std::io;
 use std::io::Read;
 use std::time::Duration;
-
 use std::process::Command;
 use std::thread;
 fn main() {
@@ -34,7 +33,7 @@ fn main() {
     }
 }
 fn get_home() -> String {
-    return String::from(env::home_dir().unwrap().to_str().unwrap());
+    return String::from(dirs::home_dir().unwrap().to_str().unwrap());
 }
 fn start_cycle(entries: Vec<String>, time: i32) {
     let mut index = 0;
