@@ -1,6 +1,6 @@
 [package]
 name = "raventhemer"
-version = "1.5.2"
+version = "1.5.3"
 authors = ["nicohman <nicohman@demenses.net>"]
 repository="https://git.sr.ht/~nicohman/raven"
 description="A theme manager and switcher for desktop linux"
