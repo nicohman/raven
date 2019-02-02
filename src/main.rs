@@ -24,147 +24,64 @@ fn main() {
 fn interpet_args() {
     //Interpet arguments and check for a need to run init()
     let r = Raven::from_args();
+    use args::Command::*;
     use Cycle::*;
     use Manage::*;
-    use Raven::*;
     check_themes().unwrap();
     //If a theme may be changing, kill the previous theme's processes. Currently only polybar
     //and lemonbar
     let conf = get_config().unwrap();
-    match r {
-        Load { theme, verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
+    r.verbose
+        .setup_env_logger("raven")
+        .expect("Couldn't set up logger");
+    match r.command {
+        Load { theme } => {
             run_theme(&load_theme(theme).unwrap()).unwrap();
         }
-        New { name, verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            new_theme(name).unwrap()
-        }
-        Modify {
-            name,
-            editor,
-            verbose,
-        } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            modify_file(conf.editing, name, editor)
-        }
-        Delete { name, verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            del_theme(name).unwrap()
-        }
-        Edit { name, verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
+        New { name } => new_theme(name).unwrap(),
+        Modify { name, editor } => modify_file(conf.editing, name, editor),
+        Delete { name } => del_theme(name).unwrap(),
+        Edit { name } => {
             edit(name).unwrap();
         }
-        Key {
-            key,
-            value,
-            verbose,
-        } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            key_value(key, value, conf.editing).unwrap()
-        }
+        Key { key, value } => key_value(key, value, conf.editing).unwrap(),
         ManageO { .. } => {
-            match r {
-                ManageO(Export { name, verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
+            match r.command {
+                ManageO(Export { name }) => {
                     export(name, check_tmp()).unwrap();
                 }
-                ManageO(Import { name, verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
-                    import(name).unwrap()
-                }
-                ManageO(Publish { name, verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
+                ManageO(Import { name }) => import(name).unwrap(),
+                ManageO(Publish { name }) => {
                     upload_theme(name).unwrap();
                 }
-                ManageO(Create {
-                    name,
-                    pass1,
-                    pass2,
-                    verbose,
-                }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
+                ManageO(Create { name, pass1, pass2 }) => {
                     create_user(name, pass1, pass2).unwrap();
                 }
-                ManageO(Unpublish { name, verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
-                    unpublish_theme(name).unwrap()
-                }
-                ManageO(Login {
-                    name,
-                    pass,
-                    verbose,
-                }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
-                    login_user(name, pass).unwrap()
-                }
-                ManageO(Logout { verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
-                    logout().unwrap()
-                }
-                ManageO(DUser { pass, verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
-                    delete_user(pass).unwrap()
-                }
+                ManageO(Unpublish { name }) => unpublish_theme(name).unwrap(),
+                ManageO(Login { name, pass }) => login_user(name, pass).unwrap(),
+                ManageO(Logout) => logout().unwrap(),
+                ManageO(DUser { pass }) => delete_user(pass).unwrap(),
                 _ => println!("Well, this shouldn't be happening"),
             };
         }
         CycleD { .. } => {
             let running = check_daemon().unwrap();
-            match r {
-                CycleD(Check { verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
+            match r.command {
+                CycleD(Check) => {
                     if running {
                         println!("Cycle daemon running.");
                     } else {
                         println!("Cycle daemon not running.");
                     }
                 }
-                CycleD(Start { verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
+                CycleD(Start) => {
                     if !running {
                         start_daemon().unwrap();
                     } else {
                         println!("Cycle daemon already running.");
                     }
                 }
-                CycleD(Stop { verbose }) => {
-                    verbose
-                        .setup_env_logger("raven")
-                        .expect("Couldn't set up logger");
+                CycleD(Stop) => {
                     if running {
                         stop_daemon().unwrap();
                     } else {
@@ -176,50 +93,16 @@ fn interpet_args() {
                 }
             }
         }
-        Info { verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            print_info(conf.editing)
-        }
-        Refresh { verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
+        Info => print_info(conf.editing),
+        Refresh => {
             refresh_theme(conf.last).unwrap();
         }
-        Install {
-            name,
-            force,
-            verbose,
-        } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
+        Install { name, force } => {
             download_theme(name, force).unwrap();
         }
-        Add {
-            name,
-            option,
-            verbose,
-        } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            add_to_theme(conf.editing, option, name).unwrap()
-        }
-        Rm { name, verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            rm_from_theme(conf.editing, name).unwrap()
-        }
-        Menu { verbose } => {
-            verbose
-                .setup_env_logger("raven")
-                .expect("Couldn't set up logger");
-            show_menu(conf.menu_command)
-        }
+        Add { name, option } => add_to_theme(conf.editing, option, name).unwrap(),
+        Rm { name } => rm_from_theme(conf.editing, name).unwrap(),
+        Menu => show_menu(conf.menu_command),
     };
 }
 

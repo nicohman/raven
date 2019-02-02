@@ -1,18 +1,17 @@
 #[derive(StructOpt, Debug)]
 #[structopt(name = "raven")]
-pub enum Raven {
+pub struct Raven {
+    #[structopt(flatten)]
+    pub verbose: clap_verbosity_flag::Verbosity,
+    #[structopt(subcommand)]
+    pub command: Command,
+}
+#[derive(StructOpt, Debug)]
+pub enum Command {
     #[structopt(name = "load", about = "Load a complete theme")]
-    Load {
-        theme: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Load { theme: String },
     #[structopt(name = "new", about = "Create a new theme")]
-    New {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    New { name: String },
     #[structopt(
         name = "modify",
         about = "Open the currently edited themes's option in $EDITOR"
@@ -22,68 +21,33 @@ pub enum Raven {
         #[structopt(short = "e", long = "editor")]
         editor: Option<String>,
         name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
     },
     #[structopt(name = "delete", about = "Delete a theme")]
-    Delete {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Delete { name: String },
     #[structopt(
         name = "info",
         about = "Print info about the theme being currently edited"
     )]
-    Info {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Info,
     #[structopt(name = "refresh", about = "Load last loaded theme")]
-    Refresh {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Refresh,
     #[structopt(name = "install", about = "Install a theme from ThemeHub repo")]
     Install {
         name: String,
         /// Don't prompt for confirmation
         #[structopt(short = "f", long = "force")]
         force: bool,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
     },
     #[structopt(name = "add", about = "Add option to current theme")]
-    Add {
-        option: String,
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Add { option: String, name: String },
     #[structopt(name = "rm", about = "Remove an option from edited theme")]
-    Rm {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Rm { name: String },
     #[structopt(name = "key", about = "Add a key-value option")]
-    Key {
-        key: String,
-        value: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Key { key: String, value: String },
     #[structopt(name = "edit", about = "Edit theme")]
-    Edit {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Edit { name: String },
     #[structopt(name = "menu", about = "Show theme menu")]
-    Menu {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Menu,
     #[structopt(name = "manage", about = "Manage online themes")]
     ManageO(Manage),
     #[structopt(name = "cycle", about = "Control cycle daemon")]
@@ -92,74 +56,35 @@ pub enum Raven {
 #[derive(StructOpt, Debug)]
 pub enum Manage {
     #[structopt(name = "export", about = "Export a theme to a tarball")]
-    Export {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Export { name: String },
     #[structopt(name = "import", about = "Import a theme from a tarball")]
-    Import {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Import { name: String },
     #[structopt(name = "publish", about = "Publish an account online")]
-    Publish {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Publish { name: String },
     #[structopt(name = "create", about = "Create an account")]
     Create {
         name: String,
         pass1: String,
         pass2: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
     },
     #[structopt(
         name = "delete_user",
         about = "Delete an online user's profile and owned themes"
     )]
-    DUser {
-        pass: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    DUser { pass: String },
     #[structopt(name = "logout", about = "Log out of your user profile")]
-    Logout {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Logout,
     #[structopt(name = "unpublish", about = "Delete an online theme")]
-    Unpublish {
-        name: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Unpublish { name: String },
     #[structopt(name = "login", about = "Log in to an user's account")]
-    Login {
-        name: String,
-        pass: String,
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Login { name: String, pass: String },
 }
 #[derive(StructOpt, Debug)]
 pub enum Cycle {
     #[structopt(name = "start", about = "Start the daemon")]
-    Start {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Start,
     #[structopt(name = "check", about = "Check if daemon is running")]
-    Check {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Check,
     #[structopt(name = "stop", about = "Stop the daemon")]
-    Stop {
-        #[structopt(flatten)]
-        verbose: clap_verbosity_flag::Verbosity,
-    },
+    Stop,
 }
