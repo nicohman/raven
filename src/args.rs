@@ -62,11 +62,7 @@ pub enum Manage {
     #[structopt(name = "publish", about = "Publish an account online")]
     Publish { name: String },
     #[structopt(name = "create", about = "Create an account")]
-    Create {
-        name: String,
-        pass1: String,
-        pass2: String,
-    },
+    Create,
     #[structopt(
         name = "delete_user",
         about = "Delete an online user's profile and owned themes"
@@ -77,7 +73,7 @@ pub enum Manage {
     #[structopt(name = "unpublish", about = "Delete an online theme")]
     Unpublish { name: String },
     #[structopt(name = "login", about = "Log in to an user's account")]
-    Login { name: String, pass: String },
+    Login,
 }
 #[derive(StructOpt, Debug)]
 pub enum Cycle {

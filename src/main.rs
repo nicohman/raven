@@ -1,4 +1,5 @@
 use std::{env, fs, fs::DirEntry, io, process::Command};
+extern crate dialoguer;
 extern crate dirs;
 extern crate ravenlib;
 #[macro_use]
@@ -11,6 +12,7 @@ use structopt::StructOpt;
 extern crate human_panic;
 pub mod args;
 use args::*;
+use dialoguer::*;
 use dirs::home_dir;
 use ravenlib::{config::*, daemon::*, ravenserver::*, themes::*};
 fn main() {
@@ -54,11 +56,30 @@ fn interpet_args() {
                 ManageO(Publish { name }) => {
                     upload_theme(name).unwrap();
                 }
-                ManageO(Create { name, pass1, pass2 }) => {
+                ManageO(Create {}) => {
+                    let name: String = Input::new()
+                        .with_prompt("Choose an username")
+                        .interact()
+                        .unwrap();
+                    let pass1 = PasswordInput::new()
+                        .with_prompt("Password")
+                        .interact()
+                        .unwrap();
+                    let pass2 = PasswordInput::new()
+                        .with_prompt("Repeat password")
+                        .interact()
+                        .unwrap();
                     create_user(name, pass1, pass2).unwrap();
                 }
                 ManageO(Unpublish { name }) => unpublish_theme(name).unwrap(),
-                ManageO(Login { name, pass }) => login_user(name, pass).unwrap(),
+                ManageO(Login {}) => {
+                    let name: String = Input::new().with_prompt("Username").interact().unwrap();
+                    let pass = PasswordInput::new()
+                        .with_prompt("Password")
+                        .interact()
+                        .unwrap();
+                    login_user(name, pass).unwrap();
+                }
                 ManageO(Logout) => logout().unwrap(),
                 ManageO(DUser { pass }) => delete_user(pass).unwrap(),
                 _ => println!("Well, this shouldn't be happening"),
