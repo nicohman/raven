@@ -67,7 +67,7 @@ pub enum Manage {
         name = "delete_user",
         about = "Delete an online user's profile and owned themes"
     )]
-    DUser { pass: String },
+    DUser,
     #[structopt(name = "logout", about = "Log out of your user profile")]
     Logout,
     #[structopt(name = "unpublish", about = "Delete an online theme")]

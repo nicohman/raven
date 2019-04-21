@@ -81,7 +81,13 @@ fn interpet_args() {
                     login_user(name, pass).unwrap();
                 }
                 ManageO(Logout) => logout().unwrap(),
-                ManageO(DUser { pass }) => delete_user(pass).unwrap(),
+                ManageO(DUser) => {
+                    let pass: String = PasswordInput::new()
+                        .with_prompt("Password")
+                        .interact()
+                        .unwrap();
+                    delete_user(pass).unwrap()
+                }
                 _ => println!("Well, this shouldn't be happening"),
             };
         }
