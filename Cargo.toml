@@ -16,7 +16,7 @@ name = "ravend"
 path = "src/ravend.rs"
 [dependencies]
 ravenlib = "1.2.4"
-time = "0.1"
+time = "0.2"
 structopt = "0.2.10"
 dirs = "1.0"
 human-panic = "1.0.1"
